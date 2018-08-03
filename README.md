@@ -1,2 +1,5 @@
-# attention_bimanual
-Attentional focus bimanual grip task, 2018-2019
+# Attentional Focus Bimanual Grip Task
+======================================
+
+2018-2019
+All versions of the bimanual grip sensor task for use in the scanner.
