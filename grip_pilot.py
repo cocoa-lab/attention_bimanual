@@ -2,8 +2,7 @@
 Prototype attentional focus grip task.
 
 Cognition, Control, and Action Lab - Dr. Taraz Lee
-Tyler Adkins (adkinsty@umich.edu) and Sean Anderson (seanpaul@umich.edu)
-
+Tyler A and Sean A
 Behavior:
     The task asks the patient to squeeze two grip sensors such that the force
     L of the left hand and R of the right hand in the equation
@@ -674,14 +673,6 @@ class Experiment:
         
         # fixme: one block
         self.run_block("train", 1, 'E')
-        
-        #fixme: a few extra trials 
-        self.stimuli.build_trial_graphics()
-        self.run_trial("train", 1, 1, 'I', 0.5)
-        self.run_trial("test", 1, 1, 'I', 0)
-        self.run_trial("test", 1, 2, 'E', .75)
-        self.run_trial("test", 1, 3, 'I', -.25)
-        self.run_trial("test", 1, 4, 'E', 0)
         
         return
 
