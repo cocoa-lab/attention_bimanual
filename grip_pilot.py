@@ -160,6 +160,12 @@ class Stimuli:
                                        height=0, pos=[self.TRIAL_R_BAR_XPOS, 0],
                                        fillColor="orange")
                                        
+        IMAGE_FILENAME = "explosion-icon.png"
+        IMAGE_YPOS = -0.9
+        IMAGE_SIZE = 0.3
+        self.explosion = visual.ImageStim(self.win, image=IMAGE_FILENAME,
+                                          pos=[0, IMAGE_YPOS], size=IMAGE_SIZE)
+
         TRIAL_RESPONSE_WIDTH  = 0.5
         TRIAL_RESPONSE_HEIGHT = 0.2
         self.trial_response = visual.Rect(self.win, width=TRIAL_RESPONSE_WIDTH,
@@ -548,6 +554,7 @@ class Experiment:
         
         RESPONSE_ANIMATION_STEP = 0.01 # window units
         RESPONSE_ANIMATION_STEP_INTERVAL = 0.002 # seconds
+        RESPONSE_EXPLOSION_INTERVAL = 0.1 # seconds
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation(FIXATION_LIMIT)
@@ -572,6 +579,12 @@ class Experiment:
 
         # FEEDBACK
         self.stimuli.trial_timer_text.setAutoDraw(False)
+        # display explosion for pea-shooter effect
+        self.stimuli.explosion.draw()
+        self.stimuli.win.flip()
+        psychopy.clock.wait(RESPONSE_EXPLOSION_INTERVAL)
+        self.stimuli.win.flip()
+        
         self.stimuli.trial_response.setAutoDraw(True)
         
         self.stimuli.trial_response.pos = [0, trial_response]
