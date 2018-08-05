@@ -650,10 +650,12 @@ class Experiment:
     def run_block(self, phase, block, focus):
         """
         REQUIRES: phase is 'train' or 'test', block > 0, focus is 'I' or 'E'
+                  block_instructions is built
         MODIFIES: self (basically... all of it.)
-        EFFECTS:  Runs a single block of trials with phase constraints in a
-                  counterbalanced design.
+        EFFECTS:  Runs a single block of trials with phase constraints with
+                  randomized target condition order.
         """
+        BLOCK_INTRO_TIME = 1 # second
         
         # fixme: phase support
         # fixme: ensure target conditions are accessible to subj's grip strength?
@@ -667,7 +669,10 @@ class Experiment:
                                                 NUM_TARGET_REPEATS,
                                                 method='random')
         
-        # fixme: implement block intro graphics
+        self.stimuli.block_instructions.text = "Block #" + str(block)
+        self.stimuli.block_instructions.draw()
+        self.stimuli.win.flip()
+        psychopy.clock.wait(BLOCK_INTRO_TIME)
         
         trial_counter = 1
         for target in trial_targets_order:
@@ -684,9 +689,17 @@ class Experiment:
                   1 block of 14 trials.
         """
     
-        # fixme: show block instructions
+        INSTR_READ_TIME = 3 # seconds
         
-        run_block('train', 1, 'E')
+        # show block instructions
+        self.stimuli.build_train_instructions()
+        self.stimuli.train_instructions.draw()
+        self.stimuli.win.flip()
+        psychopy.clock.wait(INSTR_READ_TIME)
+        
+        self.stimuli.build_block_instructions()
+    
+        run_block('train', 1, 'E') #fixme: focus condition
     
         return
     
@@ -739,8 +752,8 @@ class Experiment:
 
         self.calibrate_grips()
         
-        # fixme: one block
-        self.run_block("train", 1, 'E')
+        # fixme: add test phases
+        self.run_training()
         
         return
 
