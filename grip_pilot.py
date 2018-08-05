@@ -593,8 +593,8 @@ class Experiment:
         
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" units
         
-        RESPONSE_ANIMATION_STEP = 0.01 # window units
-        RESPONSE_ANIMATION_STEP_INTERVAL = 0.002 # seconds
+        #RESPONSE_ANIMATION_STEP = 0.01 # window units
+        #RESPONSE_ANIMATION_STEP_INTERVAL = 0.002 # seconds
         RESPONSE_EXPLOSION_INTERVAL = 0.1 # seconds
         
         # FIXATION AND TRIAL GRAPHICS
@@ -625,6 +625,7 @@ class Experiment:
         self.stimuli.win.flip()
         psychopy.clock.wait(RESPONSE_EXPLOSION_INTERVAL)
         self.stimuli.win.flip()
+        psychopy.clock.wait(RESPONSE_EXPLOSION_INTERVAL)
         
         self.stimuli.trial_response.setAutoDraw(True)
         
