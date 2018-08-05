@@ -699,7 +699,7 @@ class Experiment:
         
         self.stimuli.build_block_instructions()
     
-        run_block('train', 1, 'E') #fixme: focus condition
+        self.run_block('train', 1, 'E') #fixme: focus condition
     
         return
     
