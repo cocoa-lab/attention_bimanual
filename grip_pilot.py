@@ -192,24 +192,20 @@ class Stimuli:
     def build_start_instructions(self):
         # Builds start-of-experiment instructions to window buffer.
         
-        instructions = "Welcome! You have a grip force sensor in each hand.\
-                        After we calibrate each, you will squeeze both to control\
-                        a cannon. In each trial, squeeze both sensors to control\
-                        the power of the shot. After 3 seconds, the cannon will \
-                        fire, and you will see where your shot ended up."
+        INSTRUCTIONS = "[INSERT INTRODUCTION INSTRUCTIONS HERE]"
         
-        self.exp_instructions = visual.TextStim(self.win, text=instructions)
+        self.exp_instructions = visual.TextStim(self.win, text=INSTRUCTIONS)
         return
     
     def build_calibration_instructions(self):
         # Builds calibration instructions to the window buffer.
-        instr_L = "Using your LEFT hand only, squeeze the LEFT grip as\
-                   hard as you can."
-        instr_R = "Using your RIGHT hand only, squeeze the RIGHT grip as\
-                   hard as you can."
+        INSTR_L = "CALIBRATION: Using your LEFT hand only, squeeze the LEFT\
+                   grip as hard as you can."
+        INSTR_R = "CALIBRATION: Using your RIGHT hand only, squeeze the RIGHT\
+                   grip as hard as you can."
     
-        self.calibrate_L_instr = visual.TextStim(self.win, text=instr_L)
-        self.calibrate_R_instr = visual.TextStim(self.win, text=instr_R)
+        self.calibrate_L_instr = visual.TextStim(self.win, text=INSTR_L)
+        self.calibrate_R_instr = visual.TextStim(self.win, text=INSTR_R)
 
         # A rectangle to display online grip force input.
         CALIB_RECT_YPOS = -0.5
@@ -221,7 +217,52 @@ class Stimuli:
         
         return
     
+    def build_train_instructions(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for train phase instructions.
+        """
+        
+        INSTRUCTIONS = "[INSERT TRAINING INSTRUCTIONS HERE]"
+    
+        self.train_instructions = visual.TextStim(self.win, text=INSTRUCTIONS)
+    
+        return
+    
+    def build_test_instructions_I(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for Internal test phase instructions.
+        """
+    
+        INSTRUCTIONS = "[FOCUS ON YOUR HANDS TO PERFORM WELL ON THE TASK]"
+    
+        self_test_instructions_I = visual.TextStim(self.win, text=INSTRUCTIONS)
+    
+        return
+    
+    def build_test_instructions_E(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for External test phase instructions.
+        """
+    
+        INSTRUCTIONS = "[FOCUS ON THE BARS/TARGET POSITION TO PERFORM WELL ON\
+                        THE TASK]"
+    
+        self_test_instructions_E = visual.TextStim(self.win, text=INSTRUCTIONS)
+    
+        return
+    
     def build_block_instructions(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for block instructions.
+        NOTE: Text for these instructions is determined by run_[phase] methods
+        """
+        self.block_instructions = visual.TextStim(self.win, text="[INSERT BLOCK\
+                                                                  INSTRUCTIONS]")
+        
         return
     
     # GRAPHICS DISPLAY INTERFACE
@@ -633,6 +674,20 @@ class Experiment:
             self.run_trial(phase, block, trial_counter, focus, target)
             trial_counter += 1
         
+        return
+    
+    def run_training(self):
+        """
+        REQUIRES: self.grips are calibrated
+        MODIFIES: self (basically... all of it.)
+        EFFECTS:  Runs the training section of the experiment, consisting of
+                  1 block of 14 trials.
+        """
+    
+        # fixme: show block instructions
+        
+        run_block('train', 1, 'E')
+    
         return
     
     def check_escaped(self):
