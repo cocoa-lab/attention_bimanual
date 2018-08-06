@@ -357,10 +357,10 @@ class Stimuli:
         """
     
         # display explosion for pea-shooter effect
-        self.stimuli.explosion.draw()
-        self.stimuli.win.flip()
+        self.explosion.draw()
+        self.win.flip()
         psychopy.clock.wait(time_interval)
-        self.stimuli.win.flip()
+        self.win.flip()
         psychopy.clock.wait(time_interval)
     
         return
