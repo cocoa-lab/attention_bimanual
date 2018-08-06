@@ -333,9 +333,11 @@ class Stimuli:
         return
 
     def hide_trial_graphics(self):
-        # REQUIRES: trial graphics built
-        # MODIFIES: self
-        # EFFECTS:  halts drawing of trial graphics (removes them from the window)
+        """
+        REQUIRES: trial graphics built
+        MODIFIES: self
+        EFFECTS:  halts drawing of trial graphics (removes them from the window)
+        """
 
         self.trial_pole.setAutoDraw(False)
         self.trial_L_bar.setAutoDraw(False)
@@ -344,6 +346,23 @@ class Stimuli:
         self.trial_response.setAutoDraw(False)
         self.trial_target.setAutoDraw(False)
 
+        return
+    
+    def disp_trial_explosion(self, time_interval):
+        """
+        REQUIRES: trial graphics built
+        MODIFIES: self
+        EFFECTS:  Displays an explosion icon to simulate pea-shooter task during
+                  trial
+        """
+    
+        # display explosion for pea-shooter effect
+        self.stimuli.explosion.draw()
+        self.stimuli.win.flip()
+        psychopy.clock.wait(time_interval)
+        self.stimuli.win.flip()
+        psychopy.clock.wait(time_interval)
+    
         return
 
     def disp_trial_feedback(self, correct, trial_response_ypos, time_interval):
@@ -640,15 +659,8 @@ class Experiment:
 
         # FEEDBACK
         self.stimuli.trial_timer_text.setAutoDraw(False)
-        # display explosion for pea-shooter effect
-        self.stimuli.explosion.draw()
-        self.stimuli.win.flip()
-        psychopy.clock.wait(RESPONSE_EXPLOSION_INTERVAL)
-        self.stimuli.win.flip()
-        psychopy.clock.wait(RESPONSE_EXPLOSION_INTERVAL)
-        
+        self.stimuli.disp_trial_explosion(RESPONSE_EXPLOSION_INTERVAL)
         self.stimuli.trial_response.setAutoDraw(True)
-        
         self.stimuli.trial_response.pos = [0, trial_response]
 
         """
@@ -663,7 +675,6 @@ class Experiment:
         """
         
         self.stimuli.disp_trial_feedback(accurate, trial_response, FEEDBACK_LIMIT)
-        
         self.stimuli.hide_trial_graphics()
     
         return accurate
