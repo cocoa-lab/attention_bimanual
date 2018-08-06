@@ -237,7 +237,7 @@ class Stimuli:
     
         INSTRUCTIONS = "[FOCUS ON YOUR HANDS TO PERFORM WELL ON THE TASK]"
     
-        self_test_instructions_I = visual.TextStim(self.win, text=INSTRUCTIONS)
+        self.test_instructions_I = visual.TextStim(self.win, text=INSTRUCTIONS)
     
         return
     
@@ -250,7 +250,7 @@ class Stimuli:
         INSTRUCTIONS = "[FOCUS ON THE BARS/TARGET POSITION TO PERFORM WELL ON\
                         THE TASK]"
     
-        self_test_instructions_E = visual.TextStim(self.win, text=INSTRUCTIONS)
+        self.test_instructions_E = visual.TextStim(self.win, text=INSTRUCTIONS)
     
         return
     
@@ -282,6 +282,26 @@ class Stimuli:
         
         psychopy.clock.wait(INSTR_READ_TIME)
     
+        return
+    
+    def disp_test_instructions(self, condition):
+        """
+        REQUIRES: self.test_instructions_I/E are built
+        MODIFIES: self
+        EFFECTS:  Displays the test phase block instructions for given condition
+        """
+    
+        INSTR_READ_TIME = 3 # seconds
+    
+        if condition == 'I':
+            self.test_instructions_I.draw()
+            self.win.flip()
+            psychopy.clock.wait(INSTR_READ_TIME)
+        else:
+            self.test_instructions_E.draw()
+            self.win.flip()
+            psychopy.clock.wait(INSTR_READ_TIME)
+                
         return
 
     def disp_fixation(self, time_interval):
@@ -692,7 +712,7 @@ class Experiment:
     
         INSTR_READ_TIME = 3 # seconds
         
-        # show block instructions
+        # show training instructions
         self.stimuli.build_train_instructions()
         self.stimuli.train_instructions.draw()
         self.stimuli.win.flip()
@@ -702,6 +722,30 @@ class Experiment:
     
         self.run_block('train', 1, 'E') #fixme: focus condition
     
+        return
+    
+    def run_test(self):
+        """
+        REQUIRES: self.grips are calibrated
+        MODIFIES: self (basically... all of it.)
+        EFFECTS:  Runs the test section of the experiment, currently consisting
+                  of 1 Internal block and 1 External block
+        """
+        CONDITIONS = ['I', 'E']
+        INSTR_READ_TIME = 3 # seconds
+    
+        # show test instructions
+        self.stimuli.build_test_instructions_E()
+        self.stimuli.build_test_instructions_I()
+    
+        condition_order = data.TrialHandler(CONDITIONS, 1, method='random')
+    
+        current_block = 1
+        for focus in condition_order:
+            self.stimuli.disp_test_instructions(focus)
+            self.run_block('test', current_block, focus)
+            current_block += 1
+            
         return
     
     def check_escaped(self):
@@ -753,8 +797,8 @@ class Experiment:
 
         self.calibrate_grips()
         
-        # fixme: add test phases
         self.run_training()
+        self.run_test()
         
         return
 
