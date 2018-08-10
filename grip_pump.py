@@ -64,6 +64,9 @@ class Grips:
         self.left_max  = 1
         self.right_max = 1
     
+        # Window units transformation factor
+        self.WINDOW_TO_GRIPFORCE = 10
+    
     def calibrate_left(self, max):
         # REQUIRES: 0 < max < 2
         # MODIFIES: left_max
@@ -82,29 +85,31 @@ class Grips:
 
     def get_left(self):
         # EFFECTS: returns activation of left grip normalized by left-hand max
+        #          and transposed into window units with preferred gradation
         # NOTE:    grip sensor input range is [-1, 1]
         
         raw = self.sensors.getY()
-        force = (raw + 1) / self.left_max
+        force = ((raw + 1) / self.left_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
     def get_right(self):
         # EFFECTS: returns activation of right grip normalized by right-hand max
+        #          and transposed into window units with preferred gradation
         # NOTE:    grip sensor input range is [-1, 1]
         
         raw = self.sensors.getX()
-        force = (raw + 1) / self.right_max
+        force = ((raw + 1) / self.right_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
-    def get_score(self):
-        """
-        EFFECTS: Calculates subject response score using the equation 
-                 specified in the docstring and subject's max grip strengths.
-        """
-    
-        # NOTE: - 1 at end is to transform score to psychopy window units
-        score = (self.get_left()[0] ** 2) + (self.get_right()[0] ** 2) - 1
-        return score
+    #def get_score(self):
+    #    """
+    #    EFFECTS: Calculates subject response score using the equation
+    #             specified in the docstring and subject's max grip strengths.
+    #    """
+    #
+    #    # NOTE: - 1 at end is to transform score to psychopy window units
+    #    score = (self.get_left()[0] ** 2) + (self.get_right()[0] ** 2) - 1
+    #    return score
 
 
 # STIMULI MANAGER OBJECT
@@ -456,7 +461,7 @@ class Experiment:
     
         # solicit max grip force L
         while timer.getTime() > 0:
-            max_left = self.grips.get_left()[0]
+            max_left = self.grips.sensors.getY()
                 
             # fixme: debug
             print(max_left)
@@ -500,7 +505,7 @@ class Experiment:
     
         # solicit max grip force R
         while timer.getTime() > 0:
-            max_right = self.grips.get_right()[0]
+            max_right = self.grips.sensors.getX()
             
             # fixme: debug
             print(max_right)
@@ -559,6 +564,16 @@ class Experiment:
         EFFECTS:  Updates trial graphics as subj responds using grip sensors.
                   Returns calculated response score of trial.
         """
+        
+        # Prevent force totals from updating too fast for human cognition
+        IMPOSED_FRAMETIME = 0.1 # seconds
+        
+        # initialize force totals
+        Lforce_total = 0
+        Rforce_total = 0
+        Lraw_total   = 0
+        Rraw_total   = 0
+
         while countdown_timer.getTime() > 0:
             self.stimuli.trial_timer_text.text = str(ceil(countdown_timer.getTime()))
             
@@ -582,6 +597,7 @@ class Experiment:
                                             (-1 + Rforce_total / 2)]
                                             
             trial_response = self.calc_force_score(Lforce_total, Rforce_total)
+            psychopy.clock.wait(IMPOSED_FRAMETIME)
             self.stimuli.win.flip()
 
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
