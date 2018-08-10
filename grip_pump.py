@@ -3,14 +3,16 @@ Prototype attentional focus grip task.
 
 Cognition, Control, and Action Lab - Dr. Taraz Lee
 Tyler A and Sean A
+
 Behavior:
-    The task asks the patient to squeeze two grip sensors such that the force
-    L of the left hand and R of the right hand in the equation
-    L^2 + R^2 = Z result in a target Z value.
+    The task asks the patient to squeeze two grip sensors such that each squeeze
+    increases the L (left) and R (right) force indicators for the trial.
+    The goal is to update L and R in the allotted time so that
+    L^2 + R^2 = Z results in a target Z value.
 Feedback:
     During the trial, the patient receives online visual feedback about the value
     of the left and right grip forces. After the trial, they receive feedback
-    specifying the error as distance from target in window units
+    specifying the error as distance from target in window units.
 Conditions:
     Internal vs. External focus instructions (varied by block)
     Target grip force Z value (varied by trial)
@@ -413,12 +415,6 @@ class Experiment:
         self.stimuli = Stimuli() # opens psychopy window
         self.grips = Grips()
         self.init_data_lists()
-        
-        #DATA_COLS = ['subject','trial_num','focus','phase','block','accuracy',
-        #             'grip_score','target','gripLraw','gripRraw','gripLnormd',
-        #             'gripRnormd','gripLmax','gripRmax']
-        
-        #self.subj_data = pd.DataFrame(columns=DATA_COLS)
     
     def init_data_lists(self):
         # EFFECTS: creates lists to hold trial data values (until they are
@@ -544,6 +540,17 @@ class Experiment:
             
         return
 
+    def calc_force_score(self, Lforce, Rforce):
+        """
+        REQUIRES: Lforce, Rforce are numbers
+        EFFECTS:  Returns force score for given bimanual force inputs using
+        equation specified in docstring.
+        """
+            
+        # NOTE: - 1 at end is to transform score to psychopy window units
+        score = (Lforce ** 2) + (Rforce ** 2) - 1
+        return score
+
     def get_subj_response(self, countdown_timer):
         """
         REQUIRES: countdown_timer is psychopy.clock.CountdownTimer
@@ -558,20 +565,26 @@ class Experiment:
             # get grip sensor data
             Lforce, Lraw = self.grips.get_left()
             Rforce, Rraw = self.grips.get_right()
+            
+            # calculate force sums
+            Lforce_total += Lforce
+            Lraw_total   += Lraw
+            Rforce_total += Rforce
+            Rraw_total   += Rraw
 
             # update left grip online feedback bar
-            self.stimuli.trial_L_bar.height = Lforce
+            self.stimuli.trial_L_bar.height = Lforce_total
             self.stimuli.trial_L_bar.pos = [self.stimuli.TRIAL_L_BAR_XPOS,
-                                            (-1 + Lforce / 2)]
+                                            (-1 + Lforce_total / 2)]
             # update right "
-            self.stimuli.trial_R_bar.height = Rforce
+            self.stimuli.trial_R_bar.height = Rforce_total
             self.stimuli.trial_R_bar.pos = [self.stimuli.TRIAL_R_BAR_XPOS,
-                                            (-1 + Rforce / 2)]
+                                            (-1 + Rforce_total / 2)]
                                             
-            trial_response = self.grips.get_score()
+            trial_response = self.calc_force_score(Lforce_total, Rforce_total)
             self.stimuli.win.flip()
 
-        return trial_response, Lforce, Lraw, Rforce, Rraw
+        return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
     
     def log_trial(self, phase, block, trial_num, focus, target, correct, 
                   gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score):
@@ -626,14 +639,12 @@ class Experiment:
                   FIXME: support for focus conditions
         """
         
-        FIXATION_LIMIT = 3 # seconds
-        TRIAL_LIMIT    = 5
+        FIXATION_LIMIT = 2 # seconds
+        TRIAL_LIMIT    = 3
         FEEDBACK_LIMIT = 3
         
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" units
         
-        #RESPONSE_ANIMATION_STEP = 0.01 # window units
-        #RESPONSE_ANIMATION_STEP_INTERVAL = 0.002 # seconds
         RESPONSE_EXPLOSION_INTERVAL = 0.1 # seconds
         
         # FIXATION AND TRIAL GRAPHICS
@@ -662,17 +673,6 @@ class Experiment:
         self.stimuli.disp_trial_explosion(RESPONSE_EXPLOSION_INTERVAL)
         self.stimuli.trial_response.setAutoDraw(True)
         self.stimuli.trial_response.pos = [0, trial_response]
-
-        """
-        # fixme: it looks a little pixelated...
-        # animate subj response
-        responsebox_ypos = -1 # bottom of screen
-        while responsebox_ypos < trial_response:
-            self.stimuli.trial_response.pos = [0, responsebox_ypos]
-            responsebox_ypos += RESPONSE_ANIMATION_STEP
-            #psychopy.clock.wait(RESPONSE_ANIMATION_STEP_INTERVAL)
-            self.stimuli.win.flip()
-        """
         
         self.stimuli.disp_trial_feedback(accurate, trial_response, FEEDBACK_LIMIT)
         self.stimuli.hide_trial_graphics()
