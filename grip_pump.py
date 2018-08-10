@@ -834,7 +834,7 @@ def main():
     DATA_DIR = "/Users/seanpaul/Box Sync/grip"
 
     # SUBJECT INFORMATION
-    SESSION_NAME = 'bimanual_grip_task'
+    SESSION_NAME = 'bimanual_grip_pump'
     SUB_ID = raw_input("Please enter the participant's ID number: ")
 
     # run experiment
