@@ -53,8 +53,6 @@ class Grips:
         joystick.backend = 'pyglet'
         
         self.nJoys = joystick.getNumJoysticks()
-        # fixme: debug
-        print(self.nJoys)
         
         JOYSTICK_ID  = 0 # not sure what this is for
         self.sensors = joystick.Joystick(JOYSTICK_ID)
@@ -273,10 +271,6 @@ class Stimuli:
         return
     
     # GRAPHICS DISPLAY INTERFACE
-    def clear(self):
-        # FIXME: turn every graphic's autoDraw to false?
-        return
-        
     def disp_start(self):
         # EFFECTS: Displays start-of-experiment instructions for five seconds.
         
@@ -551,7 +545,7 @@ class Experiment:
         """
         REQUIRES: Lforce, Rforce are numbers
         EFFECTS:  Returns force score for given bimanual force inputs using
-        equation specified in docstring.
+                  equation specified in docstring.
         """
             
         # NOTE: - 1 at end is to transform score to psychopy window units
@@ -567,9 +561,6 @@ class Experiment:
                   Returns calculated response score of trial.
         """
         
-        # Prevent force totals from updating too fast for human cognition
-        #IMPOSED_FRAMETIME = 0.1 # seconds
-        
         # initialize force totals
         Lforce_total = 0
         Rforce_total = 0
@@ -582,6 +573,8 @@ class Experiment:
             # get grip sensor data
             Lforce, Lraw = self.grips.get_left()
             Rforce, Rraw = self.grips.get_right()
+            
+            #fixme: record online bimanual grip activation path for each trial?
             
             # calculate force sums
             Lforce_total += Lforce
