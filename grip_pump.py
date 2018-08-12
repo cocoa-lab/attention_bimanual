@@ -65,7 +65,7 @@ class Grips:
         self.right_max = 1
     
         # Window units transformation factor
-        self.WINDOW_TO_GRIPFORCE = 10
+        self.WINDOW_TO_GRIPFORCE = 100
     
     def calibrate_left(self, max):
         # REQUIRES: 0 < max < 2
@@ -467,8 +467,9 @@ class Experiment:
             print(max_left)
             
             # display online rectangle for input
+            rect_height = (0 if max_left < 0 else max_left)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       max_left]
+                                                       rect_height]
             counter_text.text = str(ceil(timer.getTime()))
             
             # refresh window
@@ -511,6 +512,7 @@ class Experiment:
             print(max_right)
             
             # display online rectangle for input
+            rect_height = (0 if max_right < 0 else max_right)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
                                                        max_right]
             counter_text.text = str(ceil(timer.getTime()))
@@ -566,7 +568,7 @@ class Experiment:
         """
         
         # Prevent force totals from updating too fast for human cognition
-        IMPOSED_FRAMETIME = 0.1 # seconds
+        #IMPOSED_FRAMETIME = 0.1 # seconds
         
         # initialize force totals
         Lforce_total = 0
@@ -597,7 +599,6 @@ class Experiment:
                                             (-1 + Rforce_total / 2)]
                                             
             trial_response = self.calc_force_score(Lforce_total, Rforce_total)
-            psychopy.clock.wait(IMPOSED_FRAMETIME)
             self.stimuli.win.flip()
 
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
