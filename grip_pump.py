@@ -186,6 +186,11 @@ class Stimuli:
                                                    color="red",
                                                    pos=[self.TRIAL_FEEDBACK_XPOS,0])
                                                    
+        self.TRIAL_POINTS_XPOS = -0.5
+        
+        self.trial_points = visual.TextStim(self.win, text="+", color="green",
+                                            pos=[self.TRIAL_POINTS_XPOS, 0])
+                                                   
         TRIAL_TIMER_XPOS = -0.75
         TRIAL_TIMER_YPOS = 0.75
         self.trial_timer_text = visual.TextStim(self.win, text="",
@@ -268,6 +273,31 @@ class Stimuli:
         self.block_instructions = visual.TextStim(self.win, text="[INSERT BLOCK\
                                                                   INSTRUCTIONS]")
         
+        return
+    
+    def build_point_total_feedback(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for point totals to be displayed at the end
+                  of each block.
+        """
+        POINTS_TEXT_YPOS = 0.5 # window units
+        
+        self.point_total = visual.TextStim(self.win, text="[points!]",
+                                           pos=[0, POINTS_TEXT_YPOS],
+                                           color='green')
+        
+        return
+    
+    def build_focus_instructions(self):
+        """
+        MODIFIES: self
+        EFFECTS:  Instantiates text for focus instructions
+        """
+        
+        self.INTERNAL_INSTR = []
+        self.EXTERNAL_INSTR = []
+    
         return
     
     # GRAPHICS DISPLAY INTERFACE
@@ -366,7 +396,7 @@ class Stimuli:
     
         return
 
-    def disp_trial_feedback(self, correct, trial_response_ypos, time_interval):
+    def disp_trial_feedback(self, points, correct, trial_response_ypos, time_interval):
         """
         REQUIRES: correct is a bool, -1 < trial_response_ypos < 1,
                   time_interval > 0
@@ -374,6 +404,9 @@ class Stimuli:
         EFFECTS:  Displays "hit" or "miss" based on correctness of trial response
         """
         
+        # Fixme: build points feedback text
+        # Fixme: display points
+
         if correct:
             # display Hit!
             self.trial_feedback_hit.pos = [self.TRIAL_FEEDBACK_XPOS,
@@ -668,12 +701,15 @@ class Experiment:
     
         # DATA LOGGING
         # compute accuracy
-        difference = abs(trial_response - target_ypos)
-        accurate = (1 if difference <= ACCURACY_THRESHOLD else 0)
+        distance = abs(trial_response - target_ypos)
+        accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
+        # update subj point total
+        if phase == 'test':
+            points = (1 - distance) * 100
+            self.subj_points += points
         # log data (publish temp results file)
         self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
                        Lraw, Lforce, Rraw, Rforce, trial_response)
-        # update subj point total
 
         #fixme: implement/debug
         print('\n' + "trial response: " + str(trial_response))
@@ -686,7 +722,8 @@ class Experiment:
         self.stimuli.trial_response.setAutoDraw(True)
         self.stimuli.trial_response.pos = [0, trial_response]
         
-        self.stimuli.disp_trial_feedback(accurate, trial_response, FEEDBACK_LIMIT)
+        self.stimuli.disp_trial_feedback(points, accurate, trial_response,
+                                         FEEDBACK_LIMIT)
         self.stimuli.hide_trial_graphics()
     
         return difference
