@@ -283,9 +283,9 @@ class Stimuli:
         """
         POINTS_TEXT_YPOS = 0.5 # window units
         
-        self.point_total = visual.TextStim(self.win, text="[points!]",
-                                           pos=[0, POINTS_TEXT_YPOS],
-                                           color='green')
+        self.point_total_text = visual.TextStim(self.win, text="[points!]",
+                                                pos=[0, POINTS_TEXT_YPOS],
+                                                color='green')
         
         return
     
@@ -296,8 +296,12 @@ class Stimuli:
                   failed trial.
         """
         
-        self.INTERNAL_FEEDBACK = []
-        self.EXTERNAL_FEEDBACK = []
+        self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
+                                  "Really focus on your fingers!"]
+        self.EXTERNAL_FEEDBACK = ["Pay attention to how far you are away from the target",
+                                  "Eyes on the prize! Focus on the target"]
+                                  
+        self.focus_feedback = visual.TextStim(self.win)
     
         return
     
@@ -431,6 +435,20 @@ class Stimuli:
 
         return
 
+    def disp_block_feedback(self, points_cum, time_interval):
+        """
+        MODIFIES: self
+        EFFECTS:  Displays total points so far.
+        """
+
+        text = "You have: %s points!" % points_cum
+        self.point_total_text.text = text
+        self.point_total_text.draw()
+        self.win.flip()
+        psychopy.clock.wait(time_interval)
+
+        return
+
 
 # EXPERIMENT OBJECT
 class Experiment:
@@ -460,17 +478,17 @@ class Experiment:
         #          packaged in a pd.DataFrame)
         # NOTE: subj_id, gripLmax, and gripRmax remain constant during experiment
         
-        self.trial_nums = []
-        self.focuses = []
-        self.phases = []
-        self.blocks = []
-        self.accuracies = []
-        self.grip_scores = []
-        self.targets = []
-        self.gripLraws = []
-        self.gripRraws = []
-        self.gripLnormds = []
-        self.gripRnormds = []
+        self.trial_nums    = []
+        self.focuses       = []
+        self.phases        = []
+        self.blocks        = []
+        self.accuracies    = []
+        self.grip_scores   = []
+        self.targets       = []
+        self.gripLraws     = []
+        self.gripRraws     = []
+        self.gripLnormds   = []
+        self.gripRnormds   = []
         self.points_gained = []
     
         return
@@ -752,12 +770,14 @@ class Experiment:
                   randomized target condition order.
         """
         BLOCK_INTRO_TIME = 2 # seconds
+        END_BLOCK_FEEDBACK_TIME = 3 # seconds
         
         # fixme: How many trials per block?
         TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
         NUM_TARGET_REPEATS = 1
         
         self.stimuli.build_trial_graphics()
+        self.stimuli.build_point_total_feedback()
         
         # create randomized conditions list
         trial_targets_order = data.TrialHandler(TRIAL_TARGETS,
@@ -773,6 +793,13 @@ class Experiment:
         for target in trial_targets_order:
             self.run_trial(phase, block, trial_counter, focus, target)
             trial_counter += 1
+        
+        # display points at end of block in test phase
+        if phase == 'test':
+            total = 0
+            for trial_points in self.points_gained:
+                total += trial_points
+            self.stimuli.disp_block_feedback(total, END_BLOCK_FEEDBACK_TIME)
         
         return
     
