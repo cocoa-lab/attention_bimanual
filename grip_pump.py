@@ -653,7 +653,7 @@ class Experiment:
         TRIAL_LIMIT    = 3
         FEEDBACK_LIMIT = 3
         
-        ACCURACY_THRESHOLD = 0.1 # "transformed grip space" units
+        ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
         
         RESPONSE_EXPLOSION_INTERVAL = 0.1 # seconds
         
@@ -668,10 +668,12 @@ class Experiment:
     
         # DATA LOGGING
         # compute accuracy
-        accurate = abs(trial_response - target_ypos) <= ACCURACY_THRESHOLD
+        difference = abs(trial_response - target_ypos)
+        accurate = (1 if difference <= ACCURACY_THRESHOLD else 0)
         # log data (publish temp results file)
         self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
                        Lraw, Lforce, Rraw, Rforce, trial_response)
+        # update subj point total
 
         #fixme: implement/debug
         print('\n' + "trial response: " + str(trial_response))
@@ -687,7 +689,7 @@ class Experiment:
         self.stimuli.disp_trial_feedback(accurate, trial_response, FEEDBACK_LIMIT)
         self.stimuli.hide_trial_graphics()
     
-        return accurate
+        return difference
 
     def run_block(self, phase, block, focus):
         """
@@ -697,7 +699,7 @@ class Experiment:
         EFFECTS:  Runs a single block of trials with phase constraints with
                   randomized target condition order.
         """
-        BLOCK_INTRO_TIME = 1 # second
+        BLOCK_INTRO_TIME = 2 # seconds
         
         # fixme: phase support
         # fixme: ensure target conditions are accessible to subj's grip strength?
@@ -754,6 +756,8 @@ class Experiment:
         """
         CONDITIONS = ['I', 'E']
         INSTR_READ_TIME = 3 # seconds
+        
+        self.subj_points = 0
     
         # show test instructions
         self.stimuli.build_test_instructions_E()
