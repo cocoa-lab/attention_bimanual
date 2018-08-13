@@ -471,6 +471,7 @@ class Experiment:
         self.gripRraws = []
         self.gripLnormds = []
         self.gripRnormds = []
+        self.points_gained = []
     
         return
     
@@ -638,7 +639,7 @@ class Experiment:
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
     
     def log_trial(self, phase, block, trial_num, focus, target, correct, 
-                  gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score):
+                  gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score, points):
         """
         REQUIRES: 
         MODIFIES: self, pwd/temp_data
@@ -660,6 +661,7 @@ class Experiment:
         self.gripLnormds.append(gripLnormd)
         self.gripRnormds.append(gripRnormd)
         self.accuracies.append(correct)
+        self.points_gained.append(points)
 
         # create temp file in case of crash
         temp_data = {'subject': [self.subj_id] * len(self.grip_scores),
@@ -669,6 +671,7 @@ class Experiment:
                      'block': self.blocks,
                      'accuracy': self.accuracies,
                      'grip_score': self.grip_scores,
+                     'points': self.points_gained,
                      'target': self.targets,
                      'gripLraw': self.gripLraws,
                      'gripRraw': self.gripRraws,
@@ -721,7 +724,7 @@ class Experiment:
         
         # log data (publish temp results file)
         self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
-                       Lraw, Lforce, Rraw, Rforce, trial_response)
+                       Lraw, Lforce, Rraw, Rforce, trial_response, points)
 
         #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
@@ -845,6 +848,7 @@ class Experiment:
                 'block': self.blocks,
                 'accuracy': self.accuracies,
                 'grip_score': self.grip_scores,
+                'points': self.points_gained,
                 'target': self.targets,
                 'gripLraw': self.gripLraws,
                 'gripRraw': self.gripRraws,
