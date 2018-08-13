@@ -289,14 +289,15 @@ class Stimuli:
         
         return
     
-    def build_focus_instructions(self):
+    def build_focus_feedback(self):
         """
         MODIFIES: self
-        EFFECTS:  Instantiates text for focus instructions
+        EFFECTS:  Instantiates text for focus feedback, to be displayed after each
+                  failed trial.
         """
         
-        self.INTERNAL_INSTR = []
-        self.EXTERNAL_INSTR = []
+        self.INTERNAL_FEEDBACK = []
+        self.EXTERNAL_FEEDBACK = []
     
         return
     
@@ -403,24 +404,29 @@ class Stimuli:
         MODIFIES: self
         EFFECTS:  Displays "hit" or "miss" based on correctness of trial response
         """
-        
-        # Fixme: build points feedback text
-        # Fixme: display points
+
+        # Fixme: display points for trial
 
         if correct:
             # display Hit!
             self.trial_feedback_hit.pos = [self.TRIAL_FEEDBACK_XPOS,
                                            trial_response_ypos]
             self.trial_feedback_hit.draw()
-            self.win.flip()
-            psychopy.clock.wait(time_interval)
         else:
             # display Miss!
             self.trial_feedback_miss.pos = [self.TRIAL_FEEDBACK_XPOS,
                                             trial_response_ypos]
             self.trial_feedback_miss.draw()
-            self.win.flip()
-            psychopy.clock.wait(time_interval)
+
+        
+        # display points for trial (no points during training)
+        if points != 0:
+            self.trial_points.text = '+' + str(points)
+            self.trial_points.pos = [self.TRIAL_POINTS_XPOS, trial_response_ypos]
+            self.trial_points.draw()
+        
+        self.win.flip()
+        psychopy.clock.wait(time_interval)
 
         return
 
@@ -541,7 +547,7 @@ class Experiment:
             # display online rectangle for input
             rect_height = (0 if max_right < 0 else max_right)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       max_right]
+                                                       rect_height]
             counter_text.text = str(ceil(timer.getTime()))
             
             # refresh window
@@ -703,15 +709,19 @@ class Experiment:
         # compute accuracy
         distance = abs(trial_response - target_ypos)
         accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
+        
         # update subj point total
         if phase == 'test':
-            points = (1 - distance) * 100
+            points = int((1 - distance) * 100)
             self.subj_points += points
+        else:
+            points = 0
+        
         # log data (publish temp results file)
         self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
                        Lraw, Lforce, Rraw, Rforce, trial_response)
 
-        #fixme: implement/debug
+        #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
         print("target: " + str(target_ypos))
         print("accuracy: " + str(accurate))
@@ -726,7 +736,7 @@ class Experiment:
                                          FEEDBACK_LIMIT)
         self.stimuli.hide_trial_graphics()
     
-        return difference
+        return distance
 
     def run_block(self, phase, block, focus):
         """
@@ -738,10 +748,9 @@ class Experiment:
         """
         BLOCK_INTRO_TIME = 2 # seconds
         
-        # fixme: phase support
-        # fixme: ensure target conditions are accessible to subj's grip strength?
+        # fixme: How many trials per block?
         TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
-        NUM_TARGET_REPEATS = 2
+        NUM_TARGET_REPEATS = 1
         
         self.stimuli.build_trial_graphics()
         
@@ -859,7 +868,8 @@ class Experiment:
 
         self.calibrate_grips()
         
-        self.run_training()
+        # fixme: debug testing phase
+        #self.run_training()
         self.run_test()
         
         return
