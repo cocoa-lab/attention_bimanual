@@ -188,7 +188,7 @@ class Stimuli:
                                                    
         self.TRIAL_POINTS_XPOS = -0.5
         
-        self.trial_points = visual.TextStim(self.win, text="+", color="green",
+        self.trial_points = visual.TextStim(self.win, text="+",
                                             pos=[self.TRIAL_POINTS_XPOS, 0])
                                                    
         TRIAL_TIMER_XPOS = -0.75
@@ -421,7 +421,8 @@ class Stimuli:
         
         # display points for trial (no points during training)
         if points != 0:
-            self.trial_points.text = '+' + str(points)
+            points = '+' + str(points)
+            self.trial_points.text = points
             self.trial_points.pos = [self.TRIAL_POINTS_XPOS, trial_response_ypos]
             self.trial_points.draw()
         
@@ -503,7 +504,7 @@ class Experiment:
             rect_height = (0 if max_left < 0 else max_left)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
                                                        rect_height]
-            counter_text.text = str(ceil(timer.getTime()))
+            counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
             self.stimuli.win.flip()
@@ -548,7 +549,7 @@ class Experiment:
             rect_height = (0 if max_right < 0 else max_right)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
                                                        rect_height]
-            counter_text.text = str(ceil(timer.getTime()))
+            counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
             self.stimuli.win.flip()
@@ -607,7 +608,8 @@ class Experiment:
         Rraw_total   = 0
 
         while countdown_timer.getTime() > 0:
-            self.stimuli.trial_timer_text.text = str(ceil(countdown_timer.getTime()))
+            timer_text = str(int(countdown_timer.getTime()) + 1)
+            self.stimuli.trial_timer_text.text = timer_text
             
             # get grip sensor data
             Lforce, Lraw = self.grips.get_left()
@@ -710,8 +712,8 @@ class Experiment:
         distance = abs(trial_response - target_ypos)
         accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
         
-        # update subj point total
-        if phase == 'test':
+        # update subj point total, no negative points
+        if phase == 'test' and (1 - distance) > 0:
             points = int((1 - distance) * 100)
             self.subj_points += points
         else:
@@ -869,6 +871,7 @@ class Experiment:
         self.calibrate_grips()
         
         # fixme: debug testing phase
+        self.stimuli.build_block_instructions()
         #self.run_training()
         self.run_test()
         
