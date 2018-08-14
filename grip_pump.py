@@ -141,11 +141,11 @@ class Stimuli:
         
         self.build_fixationpoint()
         
-        TRIAL_POLE_WIDTH  = 0.1
-        TRIAL_POLE_HEIGHT = 2  # the entire window
-        self.trial_pole = visual.Rect(self.win, width=TRIAL_POLE_WIDTH,
-                                      height=TRIAL_POLE_HEIGHT, pos=[0,0],
-                                      fillColor="grey", lineColor="grey")
+        #TRIAL_POLE_WIDTH  = 0.1
+        #TRIAL_POLE_HEIGHT = 2  # the entire window
+        #self.trial_pole = visual.Rect(self.win, width=TRIAL_POLE_WIDTH,
+        #                              height=TRIAL_POLE_HEIGHT, pos=[0,0],
+        #                              fillColor="grey", lineColor="grey")
                                       
         TRIAL_TARGET_WIDTH  = 0.75
         TRIAL_TARGET_HEIGHT = 0.3
@@ -164,12 +164,6 @@ class Stimuli:
         self.trial_R_bar = visual.Rect(self.win, width=TRIAL_BARS_WIDTH,
                                        height=0, pos=[self.TRIAL_R_BAR_XPOS, 0],
                                        fillColor="orange")
-        
-        #IMAGE_FILENAME = "explosion-icon.png"
-        #IMAGE_YPOS = -0.9
-        #IMAGE_SIZE = 0.3
-        #self.explosion = visual.ImageStim(self.win, image=IMAGE_FILENAME,
-        #                                  pos=[0, IMAGE_YPOS], size=IMAGE_SIZE)
 
         TRIAL_RESPONSE_WIDTH  = 0.5
         TRIAL_RESPONSE_HEIGHT = 0.2
@@ -357,7 +351,7 @@ class Stimuli:
         # EFFECTS:  displays graphics for the trial (inviting subject response)
 
         # online grip feedback and counter
-        self.trial_pole.setAutoDraw(True)
+        #self.trial_pole.setAutoDraw(True)
         self.trial_L_bar.setAutoDraw(True)
         self.trial_R_bar.setAutoDraw(True)
         self.trial_timer_text.setAutoDraw(True)
@@ -375,7 +369,7 @@ class Stimuli:
         EFFECTS:  halts drawing of trial graphics (removes them from the window)
         """
 
-        self.trial_pole.setAutoDraw(False)
+        #self.trial_pole.setAutoDraw(False)
         self.trial_L_bar.setAutoDraw(False)
         self.trial_R_bar.setAutoDraw(False)
         self.trial_timer_text.setAutoDraw(False)
@@ -383,24 +377,6 @@ class Stimuli:
         self.trial_target.setAutoDraw(False)
 
         return
-    
-    
-    #def disp_trial_explosion(self, time_interval):
-    #    """
-    #    REQUIRES: trial graphics built
-    #    MODIFIES: self
-    #    EFFECTS:  Displays an explosion icon to simulate pea-shooter task during
-    #              trial
-    #    """
-    #
-    #    # display explosion for pea-shooter effect
-    #    self.explosion.draw()
-    #    self.win.flip()
-    #    psychopy.clock.wait(time_interval)
-    #    self.win.flip()
-    #    psychopy.clock.wait(time_interval)
-    #
-    #    return
 
     def disp_trial_feedback(self, points, correct, trial_response_ypos, time_interval):
         """
@@ -718,8 +694,6 @@ class Experiment:
         
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
         
-        #RESPONSE_EXPLOSION_INTERVAL = 0.1 # seconds
-        
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation(FIXATION_LIMIT)
         self.stimuli.disp_trial(target_ypos)
@@ -752,7 +726,6 @@ class Experiment:
 
         # FEEDBACK
         self.stimuli.trial_timer_text.setAutoDraw(False)
-        #self.stimuli.disp_trial_explosion(RESPONSE_EXPLOSION_INTERVAL)
         self.stimuli.trial_response.setAutoDraw(True)
         self.stimuli.trial_response.pos = [0, trial_response]
         
