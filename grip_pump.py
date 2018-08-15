@@ -508,15 +508,16 @@ class Experiment:
     
         # solicit max grip force L
         while timer.getTime() > 0:
-            max_left = self.grips.sensors.getY()
+            max_left = self.grips.sensors.getY() + 1
                 
             # fixme: debug
             print(max_left)
             
             # display online rectangle for input
-            rect_height = (0 if max_left < 0 else max_left)
+            # fixme: Debug
+            #rect_height = (0 if max_left < 0 else max_left - 1)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       rect_height]
+                                                       max_left]
             counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
@@ -553,15 +554,16 @@ class Experiment:
     
         # solicit max grip force R
         while timer.getTime() > 0:
-            max_right = self.grips.sensors.getX()
+            max_right = self.grips.sensors.getX() + 1
             
             # fixme: debug
             print(max_right)
             
             # display online rectangle for input
-            rect_height = (0 if max_right < 0 else max_right)
+            # fixme: debug
+            #rect_height = (0 if max_right < 0 else max_right - 1)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       rect_height]
+                                                       max_right]
             counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
@@ -637,6 +639,11 @@ class Experiment:
             Lraw_total   += Lraw
             Rforce_total += Rforce
             Rraw_total   += Rraw
+            
+            #fixme: Debug
+            print "left RAW: %s, right RAW: %s" % (self.grips.sensors.getY(),
+                                                   self.grips.sensors.getX())
+            print "left input: %s, right input: %s" % (Lforce, Rforce)
 
             # update left grip online feedback bar
             self.stimuli.trial_L_bar.height = Lforce_total
@@ -649,6 +656,8 @@ class Experiment:
                                             
             trial_response = self.calc_force_score(Lforce_total, Rforce_total)
             self.stimuli.win.flip()
+        
+            self.check_escaped()
 
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
     
@@ -848,8 +857,8 @@ class Experiment:
         # Checks if participant pressed escape. Quits the experiment (while
         # ensuring all data has been logged) if yes. FIXME: implement
         if event.getKeys(keyList=["escape"]):
+            self.stimuli.win.close()
             core.quit()
-            win.close()
             
         return 1
         
@@ -894,9 +903,8 @@ class Experiment:
 
         self.calibrate_grips()
         
-        # fixme: debug testing phase
         self.stimuli.build_block_instructions()
-        #self.run_training()
+        self.run_training()
         self.run_test()
         
         return
@@ -919,7 +927,7 @@ def main():
                        
     # PATH INFORMATION
     # FIXME: need correct working directory!
-    DATA_DIR = "/Users/seanpaul/Box Sync/grip"
+    DATA_DIR = "/Users/seanpaul/Desktop/Box Sync/grip"
 
     # SUBJECT INFORMATION
     SESSION_NAME = 'bimanual_grip_pump'
