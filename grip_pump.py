@@ -325,19 +325,20 @@ class Stimuli:
     
         if condition == 'I':
             self.test_instructions_I.draw()
-            self.win.flip()
-            psychopy.clock.wait(INSTR_READ_TIME)
         else:
             self.test_instructions_E.draw()
-            self.win.flip()
-            psychopy.clock.wait(INSTR_READ_TIME)
+
+        self.win.flip()
+        psychopy.clock.wait(INSTR_READ_TIME)
                 
         return
 
     def disp_fixation(self, time_interval):
-        # REQUIRES: self.fixation is built, time_interval is float or int
-        # MODIFIES: self
-        # EFFECTS:  displays the fixation dot for the specified interval.
+        """
+        REQUIRES: self.fixation is built, time_interval is float or int
+        MODIFIES: self
+        EFFECTS:  displays the fixation dot for the specified interval.
+        """
         
         self.fixation.draw()
         self.win.flip()
@@ -345,18 +346,22 @@ class Stimuli:
         
         return
 
-    def disp_trial(self, target_ypos):
-        # REQUIRES: -1 < target_ypos < 1, trial graphics built
-        # MODIFIES: self
-        # EFFECTS:  displays graphics for the trial (inviting subject response)
+    def disp_trial(self, target_ypos, online=True):
+        """
+        REQUIRES: -1 < target_ypos < 1, trial graphics built
+        MODIFIES: self
+        EFFECTS:  displays graphics for the trial (inviting subject response)
+        """
 
         # online grip feedback and counter
-        #self.trial_pole.setAutoDraw(True)
-        self.trial_L_bar.setAutoDraw(True)
-        self.trial_R_bar.setAutoDraw(True)
+        if online:
+            self.trial_L_bar.setAutoDraw(True)
+            self.trial_R_bar.setAutoDraw(True)
+        
         self.trial_timer_text.setAutoDraw(True)
         
         # target
+        #self.trial_pole.setAutoDraw(True)
         self.trial_target.pos = [0, target_ypos]
         self.trial_target.setAutoDraw(True)
 
@@ -410,6 +415,18 @@ class Stimuli:
         self.win.flip()
         psychopy.clock.wait(time_interval)
 
+        return
+    
+    def disp_focus_feedback(self, focus, instr_index, time_interval):
+        """
+        REQUIRES: 0 <= instr_index < len(self.INTERNAL_FEEDBACK)
+        MODIFIES: self
+        EFFECTS:  Displays focus instructions-type feedback to subj.
+        NOTE:     Up to Experiment to counterbalance which instructions are 
+                  displayed, and when focus instructions are given.
+        """
+    
+        # fixme: implement
         return
 
     def disp_block_feedback(self, points_cum, time_interval):
@@ -561,9 +578,11 @@ class Experiment:
         return self.grips.right_max
     
     def calibrate_grips(self):
-        # MODIFIES: stimuli, grips
-        # EFFECTS:  prompts subject to follow calibration procedure and updates
-        #           grips accordingly
+        """
+        MODIFIES: stimuli, grips
+        EFFECTS:  prompts subject to follow calibration procedure and updates
+                  grips accordingly
+        """
         
         CALIBRATION_INTERVAL = 3 # seconds
         INSTR_READ_TIME      = 3
@@ -696,7 +715,7 @@ class Experiment:
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation(FIXATION_LIMIT)
-        self.stimuli.disp_trial(target_ypos)
+        self.stimuli.disp_trial(target_ypos, online=(phase == 'train'))
         
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
         
