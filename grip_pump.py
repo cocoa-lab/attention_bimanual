@@ -289,6 +289,7 @@ class Stimuli:
         EFFECTS:  Instantiates text for focus feedback, to be displayed after each
                   failed trial.
         """
+        self.NUM_FOCUS_INSTRUCTIONS = 2
         
         self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
                                   "Really focus on your fingers!"]
@@ -420,13 +421,21 @@ class Stimuli:
     def disp_focus_feedback(self, focus, instr_index, time_interval):
         """
         REQUIRES: 0 <= instr_index < len(self.INTERNAL_FEEDBACK)
+                  focus == 'I' or 'E'
         MODIFIES: self
         EFFECTS:  Displays focus instructions-type feedback to subj.
         NOTE:     Up to Experiment to counterbalance which instructions are 
                   displayed, and when focus instructions are given.
         """
-    
-        # fixme: implement
+
+        if focus == 'I':
+            self.focus_feedback.text = self.INTERNAL_FEEDBACK[instr_index]
+        else:
+            self.focus_feedback.text = self.EXTERNAL_FEEDBACK[instr_index]
+        
+        self.focus_feedback.draw()
+        psychopy.clock.wait(time_interval)
+        
         return
 
     def disp_block_feedback(self, points_cum, time_interval):
@@ -435,7 +444,7 @@ class Stimuli:
         EFFECTS:  Displays total points so far.
         """
 
-        text = "You have: %s points!" % points_cum
+        text = "You gained %s points this block!" % points_cum
         self.point_total_text.text = text
         self.point_total_text.draw()
         self.win.flip()
@@ -794,6 +803,11 @@ class Experiment:
         trial_counter = 1
         for target in trial_targets_order:
             self.run_trial(phase, block, trial_counter, focus, target)
+            # display focus-specific advice every 2 trials
+            if trial_counter % 2 == 0 and phase == 'test':
+                instruction = trial_counter % self.stimuli.NUM_FOCUS_INSTRUCTIONS
+                self.stimuli.disp_focus_feedback(focus, instruction,
+                                                 END_BLOCK_FEEDBACK_TIME)
             trial_counter += 1
         
         # display points at end of block in test phase
@@ -842,6 +856,7 @@ class Experiment:
         # show test instructions
         self.stimuli.build_test_instructions_E()
         self.stimuli.build_test_instructions_I()
+        self.stimuli.build_focus_feedback()
     
         condition_order = data.TrialHandler(CONDITIONS, 1, method='random')
     
