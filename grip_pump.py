@@ -344,6 +344,20 @@ class Stimuli:
                 
         return
 
+    def disp_block_instructions(self, block_num, time_interval):
+        """
+        REQUIRES: block_instructions are built
+        MODIFIES: self
+        EFFECTS:  Displays the block # to the screen.
+        """
+    
+        self.stimuli.block_instructions.text = "Block #" + str(block_num)
+        self.stimuli.block_instructions.draw()
+        self.stimuli.win.flip()
+        psychopy.clock.wait(time_interval)
+    
+        return
+
     def disp_fixation(self, time_interval):
         """
         REQUIRES: self.fixation is built, time_interval is float or int
@@ -732,10 +746,55 @@ class Experiment:
     
         return
 
-    def run_trial(self, phase, block, trial_num, focus, target_ypos, instr_index):
+    def run_train_trial(self, block, trial_num, target_ypos):
+        """
+        REQUIRES: -1 < target_ypos < 1
+        MODIFIES: self (self.stimuli, self.grips, etc.)
+        EFFECTS:  Runs a single trial for use in the training phase.
+        """
+        FIXATION_LIMIT = 2 # seconds
+        TRIAL_LIMIT    = 3
+        FEEDBACK_LIMIT = 3
+    
+        ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
+    
+        # FIXATION AND TRIAL GRAPHICS
+        self.stimuli.disp_fixation(FIXATION_LIMIT)
+        self.stimuli.disp_trial(target_ypos, online=True)
+    
+        timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
+    
+        # SUBJ RESPONSE
+        trial_response, Lforce, Lraw, Rforce, Rraw = self.get_subj_response(timer)
+    
+        # DATA LOGGING
+        # compute accuracy
+        distance = abs(trial_response - target_ypos)
+        accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
+    
+        # log data (publish temp results file)
+        self.log_trial('train', block, trial_num, np.nan, target_ypos, accurate,
+                       Lraw, Lforce, Rraw, Rforce, trial_response, np.nan, np.nan)
+    
+        #fixme: debug
+        print('\n' + "trial response: " + str(trial_response))
+        print("target: " + str(target_ypos))
+        print("accuracy: " + str(accurate))
+    
+        # FEEDBACK
+        self.stimuli.trial_timer_text.setAutoDraw(False)
+        self.stimuli.trial_response.setAutoDraw(True)
+        self.stimuli.trial_response.pos = [0, trial_response]
+        
+        self.stimuli.disp_trial_feedback(0, accurate, trial_response,
+                                         FEEDBACK_LIMIT)
+        self.stimuli.hide_trial_graphics()
+                                         
+        return distance
+
+    def run_test_trial(self, block, trial_num, focus, target_ypos, instr_index):
         """
         REQUIRES: -1 < target_ypos < 1, focus is either 'I' or 'E',
-                  phase is either 'train' or 'test',
                   0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS)
         MODIFIES: self (self.stimuli, self.grips, etc.)
         EFFECTS:  Runs a single trial with given phase and focus conditions
@@ -750,7 +809,7 @@ class Experiment:
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation(FIXATION_LIMIT)
-        self.stimuli.disp_trial(target_ypos, online=(phase == 'train'))
+        self.stimuli.disp_trial(target_ypos, online=False)
         
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
         
@@ -763,14 +822,14 @@ class Experiment:
         accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
         
         # update subj point total, no negative points
-        if phase == 'test' and (1 - distance) > 0:
+        if (1 - distance) > 0:
             points = int((1 - distance) * 100)
             self.subj_points += points
         else:
             points = 0
         
         # log data (publish temp results file)
-        self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
+        self.log_trial('test', block, trial_num, focus, target_ypos, accurate,
                        Lraw, Lforce, Rraw, Rforce, trial_response, points, instr_index)
 
         #fixme: debug
@@ -789,14 +848,45 @@ class Experiment:
     
         return distance
 
-    def run_block(self, phase, block, focus):
+    def run_train_block(self, block):
         """
-        REQUIRES: phase is 'train' or 'test', block > 0, focus is 'I' or 'E'
+        REQUIRES: block > 0, block_instructions is built
+        MODIFIES: self (basically... all of it.)
+        EFFECTS: Runs a single block of trials for use during train phase.
+                 Randomizes target condition order.
+        """
+        BLOCK_INTRO_TIME        = 2 # seconds
+        END_BLOCK_FEEDBACK_TIME = 3
+    
+        # fixme: How many trials per train block?
+        TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
+        NUM_TARGET_REPEATS = 1
+        
+        self.stimuli.build_trial_graphics()
+    
+        # create randomized conditions list
+        trial_targets_order = data.TrialHandler(TRIAL_TARGETS,
+                                                NUM_TARGET_REPEATS,
+                                                method='random')
+    
+        self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
+    
+        trial_counter = 1
+        for target in trial_targets_order:
+            self.run_train_trial(block, trial_counter, target)
+            trial_counter += 1
+        
+        return
+    
+    def run_test_block(self, block, focus):
+        """
+        REQUIRES: block > 0, focus is 'I' or 'E'
                   block_instructions is built
         MODIFIES: self (basically... all of it.)
-        EFFECTS:  Runs a single block of trials with phase constraints with
+        EFFECTS:  Runs a single test block of trials with
                   randomized target condition order.
         """
+        
         BLOCK_INTRO_TIME = 2 # seconds
         END_BLOCK_FEEDBACK_TIME = 3 # seconds
         
@@ -813,33 +903,27 @@ class Experiment:
                                                 method='random')
                                                 
         # create randomized focus instructions order
-        if phase == 'test':
-            focus_instr_order = data.TrialHandler(range(self.stimuli.NUM_FOCUS_INSTRUCTIONS),
-                                                  NUM_TARGET_REPEATS,
-                                                  method='random')
+        focus_instr_order = data.TrialHandler(range(self.stimuli.NUM_FOCUS_INSTRUCTIONS),
+                                              NUM_TARGET_REPEATS,
+                                              method='random')
         
-        # display block instructions
-        self.stimuli.block_instructions.text = "Block #" + str(block)
-        self.stimuli.block_instructions.draw()
-        self.stimuli.win.flip()
-        psychopy.clock.wait(BLOCK_INTRO_TIME)
+        self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
         
         trial_counter = 1
         for target in trial_targets_order:
-            self.run_trial(phase, block, trial_counter, focus, target, instr_index)
+            self.run_test_trial(block, trial_counter, focus, target, instr_index)
             # display focus-specific advice every 2 trials
-            if trial_counter % 2 == 0 and phase == 'test':
+            if trial_counter % 2 == 0:
                 instr_index = focus_instr_order.next()
                 self.stimuli.disp_focus_feedback(focus, instr_index,
                                                  END_BLOCK_FEEDBACK_TIME)
             trial_counter += 1
         
         # display points at end of block in test phase
-        if phase == 'test':
-            total = 0
-            for trial_points in self.points_gained:
-                total += trial_points
-            self.stimuli.disp_block_feedback(total, END_BLOCK_FEEDBACK_TIME)
+        total = 0
+        for trial_points in self.points_gained:
+            total += trial_points
+        self.stimuli.disp_block_feedback(total, END_BLOCK_FEEDBACK_TIME)
         
         return
     
@@ -861,7 +945,7 @@ class Experiment:
         
         self.stimuli.build_block_instructions()
     
-        self.run_block('train', 1, 'E') #fixme: focus condition
+        self.run_train_block(1)
     
         return
     
@@ -887,7 +971,7 @@ class Experiment:
         current_block = 1
         for focus in condition_order:
             self.stimuli.disp_test_instructions(focus)
-            self.run_block('test', current_block, focus)
+            self.run_test_block(current_block, focus)
             current_block += 1
             
         return
