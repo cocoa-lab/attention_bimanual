@@ -912,6 +912,8 @@ class Experiment:
         self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
         
         trial_counter = 1
+        # first trial(s) haven't seen focus instr feedback yet
+        instr_index = np.nan
         for target in trial_targets_order:
             self.run_test_trial(block, trial_counter, focus, target, instr_index)
             # display focus-specific advice every 2 trials
