@@ -700,7 +700,7 @@ class Experiment:
                   gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score,
                   points, instr_index):
         """
-        REQUIRES: 
+        REQUIRES: ...0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS)...
         MODIFIES: self, pwd/temp_data
         EFFECTS:  Adds all relevant data of trial to subj_data. Writes all data
                   so far to a temp data file in case program crashes.
@@ -712,7 +712,9 @@ class Experiment:
         self.phases.append(phase)
         self.blocks.append(block)
         self.targets.append(target)
-        self.instrs.append(focus + str(instr_index))
+        
+        instr_index = (np.nan if phase == 'train' else focus + str(instr_index))
+        self.instrs.append(instr_index)
 
         # fill in trial response data
         self.grip_scores.append(grip_score)
