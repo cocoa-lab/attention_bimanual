@@ -289,12 +289,13 @@ class Stimuli:
         EFFECTS:  Instantiates text for focus feedback, to be displayed after each
                   failed trial.
         """
-        self.NUM_FOCUS_INSTRUCTIONS = 2
         
         self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
                                   "Really focus on your fingers!"]
         self.EXTERNAL_FEEDBACK = ["Pay attention to how far you are away from the target",
                                   "Eyes on the prize! Focus on the target"]
+        
+        self.NUM_FOCUS_INSTRUCTIONS = len(self.INTERNAL_FEEDBACK)
                                   
         self.focus_feedback = visual.TextStim(self.win)
     
@@ -434,6 +435,7 @@ class Stimuli:
             self.focus_feedback.text = self.EXTERNAL_FEEDBACK[instr_index]
         
         self.focus_feedback.draw()
+        self.win.flip()
         psychopy.clock.wait(time_interval)
         
         return
