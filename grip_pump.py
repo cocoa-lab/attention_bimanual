@@ -294,9 +294,14 @@ class Stimuli:
         """
         
         self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
-                                  "Really focus on your fingers!"]
+                                  "Really focus on your fingers!",
+                                  "Pay attention to your hand/arm muscles",
+                                  "Control your grip strength effectively"]
         self.EXTERNAL_FEEDBACK = ["Pay attention to how far you are away from the target",
-                                  "Eyes on the prize! Focus on the target"]
+                                  "Eyes on the prize! Focus on the target",
+                                  "Note the distance between the target and your\
+                                   respose.",
+                                  "Attend to the height of the target"]
                                   
         # check if number of instructions are same for each focus condition
         WARNING_MSG = "WARNING! There isn't an equal number of internal vs external\
