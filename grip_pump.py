@@ -288,12 +288,21 @@ class Stimuli:
         MODIFIES: self
         EFFECTS:  Instantiates text for focus feedback, to be displayed after each
                   failed trial.
+        NOTE:     AFTER DATA COLLECTION STARTED, do not mess with order of these
+                  instructions in their lists! Needed for data analysis.
+                  
         """
         
         self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
                                   "Really focus on your fingers!"]
         self.EXTERNAL_FEEDBACK = ["Pay attention to how far you are away from the target",
                                   "Eyes on the prize! Focus on the target"]
+                                  
+        # check if number of instructions are same for each focus condition
+        WARNING_MSG = "WARNING! There isn't an equal number of internal vs external\
+                       focus instructions. Please correct this in\
+                       Stimuli.build_focus_feedback!"
+        assert len(self.INTERNAL_FEEDBACK) == len(self.EXTERNAL_FEEDBACK), WARNING_MSG
         
         self.NUM_FOCUS_INSTRUCTIONS = len(self.INTERNAL_FEEDBACK)
                                   
@@ -485,6 +494,7 @@ class Experiment:
         
         self.trial_nums    = []
         self.focuses       = []
+        self.instrs        = []
         self.phases        = []
         self.blocks        = []
         self.accuracies    = []
@@ -673,7 +683,8 @@ class Experiment:
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
     
     def log_trial(self, phase, block, trial_num, focus, target, correct, 
-                  gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score, points):
+                  gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score,
+                  points, instr_index):
         """
         REQUIRES: 
         MODIFIES: self, pwd/temp_data
@@ -687,6 +698,7 @@ class Experiment:
         self.phases.append(phase)
         self.blocks.append(block)
         self.targets.append(target)
+        self.instrs.append(focus + str(instr_index))
 
         # fill in trial response data
         self.grip_scores.append(grip_score)
@@ -701,6 +713,7 @@ class Experiment:
         temp_data = {'subject': [self.subj_id] * len(self.grip_scores),
                      'trial_num': self.trial_nums,
                      'focus': self.focuses,
+                     'instr_last_seen': self.instrs,
                      'phase': self.phases,
                      'block': self.blocks,
                      'accuracy': self.accuracies,
@@ -719,12 +732,14 @@ class Experiment:
     
         return
 
-    def run_trial(self, phase, block, trial_num, focus, target_ypos):
+    def run_trial(self, phase, block, trial_num, focus, target_ypos, instr_index):
         """
-        REQUIRES: -1 < target_ypos < 1, focus is either 'I' or 'E'
+        REQUIRES: -1 < target_ypos < 1, focus is either 'I' or 'E',
+                  phase is either 'train' or 'test',
+                  0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS)
         MODIFIES: self (self.stimuli, self.grips, etc.)
-        EFFECTS:  Runs a single trial and records trial data. 
-                  FIXME: support for focus conditions
+        EFFECTS:  Runs a single trial with given phase and focus conditions
+                  and records all relevant trial data.
         """
         
         FIXATION_LIMIT = 2 # seconds
@@ -756,7 +771,7 @@ class Experiment:
         
         # log data (publish temp results file)
         self.log_trial(phase, block, trial_num, focus, target_ypos, accurate,
-                       Lraw, Lforce, Rraw, Rforce, trial_response, points)
+                       Lraw, Lforce, Rraw, Rforce, trial_response, points, instr_index)
 
         #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
@@ -796,7 +811,14 @@ class Experiment:
         trial_targets_order = data.TrialHandler(TRIAL_TARGETS,
                                                 NUM_TARGET_REPEATS,
                                                 method='random')
+                                                
+        # create randomized focus instructions order
+        if phase == 'test':
+            focus_instr_order = data.TrialHandler(range(self.stimuli.NUM_FOCUS_INSTRUCTIONS),
+                                                  NUM_TARGET_REPEATS,
+                                                  method='random')
         
+        # display block instructions
         self.stimuli.block_instructions.text = "Block #" + str(block)
         self.stimuli.block_instructions.draw()
         self.stimuli.win.flip()
@@ -804,11 +826,11 @@ class Experiment:
         
         trial_counter = 1
         for target in trial_targets_order:
-            self.run_trial(phase, block, trial_counter, focus, target)
+            self.run_trial(phase, block, trial_counter, focus, target, instr_index)
             # display focus-specific advice every 2 trials
             if trial_counter % 2 == 0 and phase == 'test':
-                instruction = trial_counter % self.stimuli.NUM_FOCUS_INSTRUCTIONS
-                self.stimuli.disp_focus_feedback(focus, instruction,
+                instr_index = focus_instr_order.next()
+                self.stimuli.disp_focus_feedback(focus, instr_index,
                                                  END_BLOCK_FEEDBACK_TIME)
             trial_counter += 1
         
@@ -891,6 +913,7 @@ class Experiment:
                 'trial_num': self.trial_nums,
                 'focus': self.focuses,
                 'phase': self.phases,
+                'instr_last_seen': self.instrs,
                 'block': self.blocks,
                 'accuracy': self.accuracies,
                 'grip_score': self.grip_scores,
