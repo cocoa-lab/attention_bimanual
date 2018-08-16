@@ -351,9 +351,9 @@ class Stimuli:
         EFFECTS:  Displays the block # to the screen.
         """
     
-        self.stimuli.block_instructions.text = "Block #" + str(block_num)
-        self.stimuli.block_instructions.draw()
-        self.stimuli.win.flip()
+        self.block_instructions.text = "Block #" + str(block_num)
+        self.block_instructions.draw()
+        self.win.flip()
         psychopy.clock.wait(time_interval)
     
         return
