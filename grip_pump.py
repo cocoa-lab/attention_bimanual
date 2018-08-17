@@ -119,7 +119,7 @@ class Stimuli:
         """
         Initializes psychopy window.
         """
-        WINDOW_SIZE = 500 # pixels
+        WINDOW_SIZE = 700 # pixels
         
         self.win = visual.Window(size=[WINDOW_SIZE, WINDOW_SIZE], fullscr=False,
                                  screen=0,
@@ -145,11 +145,10 @@ class Stimuli:
         #                              height=TRIAL_POLE_HEIGHT, pos=[0,0],
         #                              fillColor="grey", lineColor="grey")
                                       
-        TRIAL_TARGET_WIDTH  = 0.75
-        TRIAL_TARGET_HEIGHT = 0.3
-        self.trial_target = visual.Rect(self.win, width=TRIAL_TARGET_WIDTH,
-                                        height=TRIAL_TARGET_HEIGHT, pos=[0,0],
-                                        fillColor="yellow", lineColor="black")
+        TRIAL_TARGET_FILENAME = "target.png"
+        TRIAL_TARGET_SIZE = 0.4
+        self.trial_target = visual.ImageStim(self.win, image=TRIAL_TARGET_FILENAME,
+                                             pos=[0,0], size=TRIAL_TARGET_SIZE)
         
         # online grip feedback bars
         TRIAL_BARS_WIDTH = 0.1
@@ -163,11 +162,9 @@ class Stimuli:
                                        height=0, pos=[self.TRIAL_R_BAR_XPOS, 0],
                                        fillColor="orange")
 
-        TRIAL_RESPONSE_WIDTH  = 0.5
-        TRIAL_RESPONSE_HEIGHT = 0.2
-        self.trial_response = visual.Rect(self.win, width=TRIAL_RESPONSE_WIDTH,
-                                          height=TRIAL_RESPONSE_HEIGHT,
-                                          pos=[0,-1], fillColor="blue")
+        TRIAL_RESPONSE_RADIUS = 0.1
+        self.trial_response = visual.Circle(self.win, radius=TRIAL_RESPONSE_RADIUS,
+                                            pos=[0,-1], fillColor="blue")
                                         
         self.TRIAL_FEEDBACK_XPOS = 0.6
         
@@ -1063,7 +1060,7 @@ class Experiment:
         
         # fixme: should block instr be built here?
         self.stimuli.build_block_instructions()
-        #self.run_training()
+        self.run_training()
         self.run_test()
         
         return
