@@ -169,7 +169,7 @@ class Stimuli:
                                           height=TRIAL_RESPONSE_HEIGHT,
                                           pos=[0,-1], fillColor="blue")
                                         
-        self.TRIAL_FEEDBACK_XPOS = 0.5
+        self.TRIAL_FEEDBACK_XPOS = 0.6
         
         self.trial_feedback_hit  = visual.TextStim(self.win, text="Hit!",
                                                    color="green",
@@ -177,6 +177,9 @@ class Stimuli:
         self.trial_feedback_miss = visual.TextStim(self.win, text="Miss!",
                                                    color="red",
                                                    pos=[self.TRIAL_FEEDBACK_XPOS,0])
+        self.trial_feedback_toohigh = visual.TextStim(self.win, text="Too high!",
+                                                      color="white",
+                                                      pos=[self.TRIAL_FEEDBACK_XPOS,0])
                                                    
         self.TRIAL_POINTS_XPOS = -0.5
         
@@ -419,20 +422,22 @@ class Stimuli:
         EFFECTS:  Displays "hit" or "miss" based on correctness of trial response
         """
 
-        # Fixme: display points for trial
-
         if correct:
             # display Hit!
             self.trial_feedback_hit.pos = [self.TRIAL_FEEDBACK_XPOS,
                                            trial_response_ypos]
             self.trial_feedback_hit.draw()
+        elif trial_response_ypos > 1:
+            # above top of window, display Too high!
+            self.trial_feedback_toohigh.pos = [self.TRIAL_FEEDBACK_XPOS,
+                                               0]
+            self.trial_feedback_toohigh.draw()
         else:
             # display Miss!
             self.trial_feedback_miss.pos = [self.TRIAL_FEEDBACK_XPOS,
                                             trial_response_ypos]
             self.trial_feedback_miss.draw()
 
-        
         # display points for trial (no points during training)
         if points != 0:
             points = '+' + str(points)
@@ -864,6 +869,8 @@ class Experiment:
         END_BLOCK_FEEDBACK_TIME = 3
     
         # fixme: How many trials per train block?
+        # Note: Don't pick a trial target hieght above 0.9, that's too close
+        # to the top of the screen.
         TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
         NUM_TARGET_REPEATS = 1
         
