@@ -411,7 +411,7 @@ class Stimuli:
         while response_circle_ypos < trial_response_ypos:
             self.trial_response.pos = [0, response_circle_ypos]
             response_circle_ypos += y_increment
-            self.qqwin.flip()
+            self.win.flip()
 
         return
             
@@ -783,7 +783,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
     
-        ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.3 # "transformed grip space" (window) units
     
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
@@ -834,7 +834,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
         
-        ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.3 # "transformed grip space" (window) units
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
