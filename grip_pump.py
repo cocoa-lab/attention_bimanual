@@ -20,11 +20,9 @@ Conditions:
 
 # LIBRARIES
 # math
-from __future__ import division  # so that 1/3=0.333 instead of 1/3=0
 import math
 from math import ceil
 import numpy as np
-from numpy.random import random, randint, normal, shuffle, uniform
 import pandas as pd
 
 # system
@@ -853,7 +851,7 @@ class Experiment:
                                          FEEDBACK_LIMIT)
         self.stimuli.hide_trial_graphics()
     
-        return distance
+        return points
 
     def run_train_block(self, block):
         """
@@ -916,23 +914,24 @@ class Experiment:
         
         self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
         
+        points_total = 0
         trial_counter = 1
         # first trial(s) haven't seen focus instr feedback yet
         instr_index = np.nan
         for target in trial_targets_order:
-            self.run_test_trial(block, trial_counter, focus, target, instr_index)
+            points = self.run_test_trial(block, trial_counter, focus, target,
+                                         instr_index)
+                                         
             # display focus-specific advice every 2 trials
             if trial_counter % 2 == 0:
                 instr_index = focus_instr_order.next()
                 self.stimuli.disp_focus_feedback(focus, instr_index,
                                                  END_BLOCK_FEEDBACK_TIME)
+            points_total += points
             trial_counter += 1
         
         # display points at end of block in test phase
-        total = 0
-        for trial_points in self.points_gained:
-            total += trial_points
-        self.stimuli.disp_block_feedback(total, END_BLOCK_FEEDBACK_TIME)
+        self.stimuli.disp_block_feedback(points_total, END_BLOCK_FEEDBACK_TIME)
         
         return
     
@@ -1036,8 +1035,9 @@ class Experiment:
 
         self.calibrate_grips()
         
+        # fixme: should block instr be built here?
         self.stimuli.build_block_instructions()
-        self.run_training()
+        #self.run_training()
         self.run_test()
         
         return
