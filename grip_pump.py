@@ -318,16 +318,12 @@ class Stimuli:
     
     # GRAPHICS DISPLAY INTERFACE
     def disp_start(self):
-        # EFFECTS: Displays start-of-experiment instructions for five seconds.
-        
-        INSTR_READ_TIME = 5 # seconds
+        # EFFECTS: Displays start-of-experiment instructions
         
         self.build_start_instructions()
         
         self.exp_instructions.draw(win=self.win)
         self.win.flip()
-        
-        psychopy.clock.wait(INSTR_READ_TIME)
     
         return
     
@@ -1000,7 +996,7 @@ class Experiment:
             
         return 1
     
-    def wait(time_interval):
+    def wait(self, time_interval):
         """
         REQUIRES: time_interval > 0
         MODIFIES: self
@@ -1050,8 +1046,10 @@ class Experiment:
                   (includes time delay for reading). Coordinates grip sensor
                   calibration.
         """
+        INSTR_READ_TIME = 5 # seconds
 
         self.stimuli.disp_start()
+        self.wait(INSTR_READ_TIME)
 
         self.calibrate_grips()
         
