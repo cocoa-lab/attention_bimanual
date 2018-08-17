@@ -999,7 +999,20 @@ class Experiment:
             core.quit()
             
         return 1
-        
+    
+    def wait(time_interval):
+        """
+        REQUIRES: time_interval > 0
+        MODIFIES: self
+        EFFECTS:  Uses psychopy countdown timer to wait the given time interval
+                  while giving the subject a chance to press escape and quit.
+        """
+        timer = psychopy.clock.CountdownTimer(time_interval)
+        while timer.getTime() > 0:
+            self.check_escaped()
+
+        return
+    
     def write_data(self):
         """
         REQUIRES: more than one trial has occurred successfully
