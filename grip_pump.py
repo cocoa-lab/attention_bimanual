@@ -318,7 +318,11 @@ class Stimuli:
     
     # GRAPHICS DISPLAY INTERFACE
     def disp_start(self):
-        # EFFECTS: Displays start-of-experiment instructions
+        """
+        REQUIRES: self.exp_instructions are built
+        MODIFIES: self
+        EFFECTS: Displays start-of-experiment instructions
+        """
         
         self.build_start_instructions()
         
@@ -334,19 +338,16 @@ class Stimuli:
         EFFECTS:  Displays the test phase block instructions for given condition
         """
     
-        INSTR_READ_TIME = 3 # seconds
-    
         if condition == 'I':
             self.test_instructions_I.draw()
         else:
             self.test_instructions_E.draw()
 
         self.win.flip()
-        psychopy.clock.wait(INSTR_READ_TIME)
                 
         return
 
-    def disp_block_instructions(self, block_num, time_interval):
+    def disp_block_instructions(self, block_num):
         """
         REQUIRES: block_instructions are built
         MODIFIES: self
@@ -356,11 +357,10 @@ class Stimuli:
         self.block_instructions.text = "Block #" + str(block_num)
         self.block_instructions.draw()
         self.win.flip()
-        psychopy.clock.wait(time_interval)
     
         return
 
-    def disp_fixation(self, time_interval):
+    def disp_fixation(self):
         """
         REQUIRES: self.fixation is built, time_interval is float or int
         MODIFIES: self
@@ -369,7 +369,6 @@ class Stimuli:
         
         self.fixation.draw()
         self.win.flip()
-        psychopy.clock.wait(time_interval)
         
         return
 
@@ -410,10 +409,9 @@ class Stimuli:
 
         return
 
-    def disp_trial_feedback(self, points, correct, trial_response_ypos, time_interval):
+    def disp_trial_feedback(self, points, correct, trial_response_ypos):
         """
-        REQUIRES: correct is a bool, -1 < trial_response_ypos < 1,
-                  time_interval > 0
+        REQUIRES: correct is a bool, -1 < trial_response_ypos < 1
         MODIFIES: self
         EFFECTS:  Displays "hit" or "miss" based on correctness of trial response
         """
@@ -442,11 +440,10 @@ class Stimuli:
             self.trial_points.draw()
         
         self.win.flip()
-        psychopy.clock.wait(time_interval)
 
         return
     
-    def disp_focus_feedback(self, focus, instr_index, time_interval):
+    def disp_focus_feedback(self, focus, instr_index):
         """
         REQUIRES: 0 <= instr_index < len(self.INTERNAL_FEEDBACK)
                   focus == 'I' or 'E'
@@ -463,12 +460,12 @@ class Stimuli:
         
         self.focus_feedback.draw()
         self.win.flip()
-        psychopy.clock.wait(time_interval)
         
         return
 
-    def disp_block_feedback(self, points_cum, time_interval):
+    def disp_block_feedback(self, points_cum):
         """
+        REQUIRES: point_total_text is built
         MODIFIES: self
         EFFECTS:  Displays total points so far.
         """
@@ -477,7 +474,6 @@ class Stimuli:
         self.point_total_text.text = text
         self.point_total_text.draw()
         self.win.flip()
-        psychopy.clock.wait(time_interval)
 
         return
 
@@ -538,7 +534,7 @@ class Experiment:
         # show L instructions
         self.stimuli.calibrate_L_instr.draw()
         self.stimuli.win.flip()
-        psychopy.clock.wait(instr_time)
+        self.wait(instr_time)
     
         # prepare timer and graphics
         timer = psychopy.clock.CountdownTimer(cali_time)
@@ -561,6 +557,7 @@ class Experiment:
             
             # refresh window
             self.stimuli.win.flip()
+            self.check_escaped()
             
         self.grips.calibrate_left(max_left)
         
@@ -584,7 +581,7 @@ class Experiment:
         # show R instructions
         self.stimuli.calibrate_R_instr.draw()
         self.stimuli.win.flip()
-        psychopy.clock.wait(instr_time)
+        self.wait(instr_time)
     
         # prepare timer and graphics
         timer = psychopy.clock.CountdownTimer(cali_time)
@@ -607,6 +604,7 @@ class Experiment:
             
             # refresh window
             self.stimuli.win.flip()
+            self.check_escaped()
         
         self.grips.calibrate_right(max_right)
         
@@ -765,7 +763,8 @@ class Experiment:
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
     
         # FIXATION AND TRIAL GRAPHICS
-        self.stimuli.disp_fixation(FIXATION_LIMIT)
+        self.stimuli.disp_fixation()
+        self.wait(FIXATION_LIMIT)
         self.stimuli.disp_trial(target_ypos, online=True)
     
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
@@ -792,8 +791,9 @@ class Experiment:
         self.stimuli.trial_response.setAutoDraw(True)
         self.stimuli.trial_response.pos = [0, trial_response]
         
-        self.stimuli.disp_trial_feedback(0, accurate, trial_response,
-                                         FEEDBACK_LIMIT)
+        self.stimuli.disp_trial_feedback(0, accurate, trial_response)
+        self.wait(FEEDBACK_LIMIT)
+        
         self.stimuli.hide_trial_graphics()
                                          
         return distance
@@ -814,7 +814,8 @@ class Experiment:
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
         
         # FIXATION AND TRIAL GRAPHICS
-        self.stimuli.disp_fixation(FIXATION_LIMIT)
+        self.stimuli.disp_fixation()
+        self.wait(FIXATION_LIMIT)
         self.stimuli.disp_trial(target_ypos, online=False)
         
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
@@ -848,8 +849,9 @@ class Experiment:
         self.stimuli.trial_response.setAutoDraw(True)
         self.stimuli.trial_response.pos = [0, trial_response]
         
-        self.stimuli.disp_trial_feedback(points, accurate, trial_response,
-                                         FEEDBACK_LIMIT)
+        self.stimuli.disp_trial_feedback(points, accurate, trial_response)
+        self.wait(FEEDBACK_LIMIT)
+        
         self.stimuli.hide_trial_graphics()
     
         return points
@@ -877,7 +879,8 @@ class Experiment:
                                                 NUM_TARGET_REPEATS,
                                                 method='random')
     
-        self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
+        self.stimuli.disp_block_instructions(block)
+        self.wait(BLOCK_INTRO_TIME)
     
         trial_counter = 1
         for target in trial_targets_order:
@@ -915,7 +918,8 @@ class Experiment:
                                               NUM_TARGET_REPEATS,
                                               method='random')
         
-        self.stimuli.disp_block_instructions(block, BLOCK_INTRO_TIME)
+        self.stimuli.disp_block_instructions(block)
+        self.wait(BLOCK_INTRO_TIME)
         
         points_total = 0
         trial_counter = 1
@@ -928,13 +932,15 @@ class Experiment:
             # display focus-specific advice every 2 trials
             if trial_counter % 2 == 0:
                 instr_index = focus_instr_order.next()
-                self.stimuli.disp_focus_feedback(focus, instr_index,
-                                                 END_BLOCK_FEEDBACK_TIME)
+                self.stimuli.disp_focus_feedback(focus, instr_index)
+                self.wait(END_BLOCK_FEEDBACK_TIME)
+            
             points_total += points
             trial_counter += 1
         
         # display points at end of block in test phase
-        self.stimuli.disp_block_feedback(points_total, END_BLOCK_FEEDBACK_TIME)
+        self.stimuli.disp_block_feedback(points_total)
+        self.wait(END_BLOCK_FEEDBACK_TIME)
         
         return
     
@@ -952,7 +958,7 @@ class Experiment:
         self.stimuli.build_train_instructions()
         self.stimuli.train_instructions.draw()
         self.stimuli.win.flip()
-        psychopy.clock.wait(INSTR_READ_TIME)
+        self.wait(INSTR_READ_TIME)
         
         self.stimuli.build_block_instructions()
     
@@ -982,6 +988,8 @@ class Experiment:
         current_block = 1
         for focus in condition_order:
             self.stimuli.disp_test_instructions(focus)
+            self.wait(INSTR_READ_TIME)
+            
             self.run_test_block(current_block, focus)
             current_block += 1
             
