@@ -122,7 +122,7 @@ class Stimuli:
         WINDOW_SIZE = 700 # pixels
         
         self.win = visual.Window(size=[WINDOW_SIZE, WINDOW_SIZE], fullscr=False,
-                                 screen=0,
+                                 screen=0, checkTiming=True,
                                  allowGUI=True, allowStencil=False,
                                  monitor='testMonitor', color="black",
                                  colorSpace='rgb', blendMode='avg',
@@ -389,7 +389,32 @@ class Stimuli:
         self.trial_target.setAutoDraw(True)
 
         return
+            
+    def disp_trial_response_animation(self, trial_response_ypos, time_interval):
+        """
+        REQUIRES: -1 < target_ypos < 1, 0 < time_interval, self.trial_response
+                  is built and .autoDraw enabled!
+        MODIFIES: self
+        EFFECTS:  Animates the response circle sliding across the screen to
+                  response_ypos location.
+        NOTE:     'escape' keypress NOT enabled during this animation.
+        """
+    
+        self.trial_response.setAutoDraw(True)
+        
+        # calculate smoothest window step interval
+        y_increment = (self.win.monitorFramePeriod / time_interval) \
+                       * (trial_response_ypos + 1)
+        
+        # animate subject response
+        response_circle_ypos = -1 # bottom of screen
+        while response_circle_ypos < trial_response_ypos:
+            self.trial_response.pos = [0, response_circle_ypos]
+            response_circle_ypos += y_increment
+            self.qqwin.flip()
 
+        return
+            
     def hide_trial_graphics(self):
         """
         REQUIRES: trial graphics built
@@ -756,6 +781,7 @@ class Experiment:
         FIXATION_LIMIT = 2 # seconds
         TRIAL_LIMIT    = 3
         FEEDBACK_LIMIT = 3
+        ANIMATION_TIME = 0.25
     
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
     
@@ -785,9 +811,8 @@ class Experiment:
     
         # FEEDBACK
         self.stimuli.trial_timer_text.setAutoDraw(False)
-        self.stimuli.trial_response.setAutoDraw(True)
-        self.stimuli.trial_response.pos = [0, trial_response]
         
+        self.stimuli.disp_trial_response_animation(trial_response, ANIMATION_TIME)
         self.stimuli.disp_trial_feedback(0, accurate, trial_response)
         self.wait(FEEDBACK_LIMIT)
         
@@ -807,6 +832,7 @@ class Experiment:
         FIXATION_LIMIT = 2 # seconds
         TRIAL_LIMIT    = 3
         FEEDBACK_LIMIT = 3
+        ANIMATION_TIME = 0.25
         
         ACCURACY_THRESHOLD = 0.1 # "transformed grip space" (window) units
         
@@ -843,9 +869,8 @@ class Experiment:
 
         # FEEDBACK
         self.stimuli.trial_timer_text.setAutoDraw(False)
-        self.stimuli.trial_response.setAutoDraw(True)
-        self.stimuli.trial_response.pos = [0, trial_response]
         
+        self.stimuli.disp_trial_response_animation(trial_response, ANIMATION_TIME)
         self.stimuli.disp_trial_feedback(points, accurate, trial_response)
         self.wait(FEEDBACK_LIMIT)
         
