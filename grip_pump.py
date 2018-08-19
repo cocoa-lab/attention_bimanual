@@ -4,6 +4,11 @@ Prototype attentional focus grip task.
 Cognition, Control, and Action Lab - Dr. Taraz Lee
 Tyler A and Sean A
 
+Created using the PsychoPy2 API:
+
+    Peirce, JW (2009) Generating stimuli for neuroscience using PsychoPy.
+        Frontiers in Neuroinformatics, 2:10. doi:10.3389/neuro.11.010.2008
+
 Behavior:
     The task asks the patient to squeeze two grip sensors such that each squeeze
     increases the L (left) and R (right) force indicators for the trial.
@@ -298,7 +303,7 @@ class Stimuli:
         self.EXTERNAL_FEEDBACK = ["Pay attention to how far you are away from the target",
                                   "Eyes on the prize! Focus on the target",
                                   "Note the distance between the target and your\
-                                   respose.",
+                                   response.",
                                   "Attend to the height of the target"]
                                   
         # check if number of instructions are same for each focus condition
@@ -700,8 +705,7 @@ class Experiment:
             Rraw_total   += Rraw
             
             #fixme: Debug
-            print "left RAW: %s, right RAW: %s" % (self.grips.sensors.getY(),
-                                                   self.grips.sensors.getX())
+            print "left RAW: %s, right RAW: %s" % (Lraw, Rraw)
             print "left input: %s, right input: %s" % (Lforce, Rforce)
 
             # update left grip online feedback bar
