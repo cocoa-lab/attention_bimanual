@@ -4,7 +4,7 @@ Prototype attentional focus grip task.
 Cognition, Control, and Action Lab - Dr. Taraz Lee
 Tyler A and Sean A
 
-Created using the PsychoPy2 API:
+Created using the PsychoPy Python library (1.90.2):
 
     Peirce, JW (2009) Generating stimuli for neuroscience using PsychoPy.
         Frontiers in Neuroinformatics, 2:10. doi:10.3389/neuro.11.010.2008
