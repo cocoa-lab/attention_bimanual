@@ -89,7 +89,7 @@ class Grips:
         #          and transposed into window units with preferred gradation
         # NOTE:    grip sensor input range is [-1, 1]
         
-        raw = self.sensors.getY()
+        raw = self.sensors.getY() + 1
         force = ((raw + 1) / self.left_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
@@ -98,7 +98,7 @@ class Grips:
         #          and transposed into window units with preferred gradation
         # NOTE:    grip sensor input range is [-1, 1]
         
-        raw = self.sensors.getX()
+        raw = self.sensors.getX() + 1
         force = ((raw + 1) / self.right_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
@@ -570,14 +570,12 @@ class Experiment:
     
         # solicit max grip force L
         while timer.getTime() > 0:
-            max_left = self.grips.sensors.getY() + 1
+            max_left = self.grips.get_left()[1]
                 
             # fixme: debug
             print(max_left)
             
             # display online rectangle for input
-            # fixme: Debug
-            #rect_height = (0 if max_left < 0 else max_left - 1)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
                                                        max_left]
             counter_text.text = str(int(timer.getTime()) + 1)
@@ -617,14 +615,12 @@ class Experiment:
     
         # solicit max grip force R
         while timer.getTime() > 0:
-            max_right = self.grips.sensors.getX() + 1
+            max_right = self.grips.get_right()[1]
             
             # fixme: debug
             print(max_right)
             
             # display online rectangle for input
-            # fixme: debug
-            #rect_height = (0 if max_right < 0 else max_right - 1)
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
                                                        max_right]
             counter_text.text = str(int(timer.getTime()) + 1)
