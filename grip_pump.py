@@ -742,7 +742,8 @@ class Experiment:
         self.instrs.append(instr_index)
 
         # fill in trial response data
-        self.grip_scores.append(grip_score)
+        #   convert window units [-1,1] to grip units [0,2]
+        self.grip_scores.append(grip_score + 1)
         self.gripLraws.append(gripLraw)
         self.gripRraws.append(gripRraw)
         self.gripLnormds.append(gripLnormd)
