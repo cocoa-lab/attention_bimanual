@@ -661,12 +661,20 @@ class Experiment:
     def calc_force_score(self, Lforce, Rforce):
         """
         REQUIRES: Lforce, Rforce are numbers
-        EFFECTS:  Returns force score for given bimanual force inputs using
+        EFFECTS:  Returns force score in window units!
+                  for given bimanual force inputs using
                   equation specified in docstring.
         """
-            
+        THRESHOLD_R = self.grips.right_max * 0.01
+        THRESHOLD_L = self.grips.left_max * 0.01
+        
+        
         # NOTE: - 1 at end is to transform score to psychopy window units
-        score = (Lforce ** 2) + (Rforce ** 2) - 1
+        if Lforce <= THRESHOLD_L or Rforce <= THRESHOLD_R:
+            score = -1 # bottom of screen
+        else:
+            score = Lforce + Rforce - 1
+
         return score
 
     def get_subj_response(self, countdown_timer):
@@ -785,7 +793,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
     
-        ACCURACY_THRESHOLD = 0.3 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.2 # "transformed grip space" (window) units
     
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
@@ -836,7 +844,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
         
-        ACCURACY_THRESHOLD = 0.3 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.2 # "transformed grip space" (window) units
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
@@ -1112,7 +1120,7 @@ def main():
                        
     # PATH INFORMATION
     # FIXME: need correct working directory!
-    DATA_DIR = "/Users/seanpaul/Desktop/Box Sync/grip"
+    DATA_DIR = "C:/Users/seanpaul/Box Sync/grip"
 
     # SUBJECT INFORMATION
     SESSION_NAME = 'bimanual_grip_pump'
