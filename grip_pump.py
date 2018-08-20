@@ -90,7 +90,7 @@ class Grips:
         # NOTE:    grip sensor input range is [-1, 1]
         
         raw = self.sensors.getY() + 1
-        force = ((raw + 1) / self.left_max) / self.WINDOW_TO_GRIPFORCE
+        force = (raw / self.left_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
     def get_right(self):
@@ -99,7 +99,7 @@ class Grips:
         # NOTE:    grip sensor input range is [-1, 1]
         
         raw = self.sensors.getX() + 1
-        force = ((raw + 1) / self.right_max) / self.WINDOW_TO_GRIPFORCE
+        force = (raw / self.right_max) / self.WINDOW_TO_GRIPFORCE
         return force, raw
 
     #def get_score(self):
@@ -282,7 +282,7 @@ class Stimuli:
         
         self.point_total_text = visual.TextStim(self.win, text="[points!]",
                                                 pos=[0, POINTS_TEXT_YPOS],
-                                                color='green')
+                                                color='yellow')
         
         return
     
@@ -720,11 +720,12 @@ class Experiment:
 
         return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
     
-    def log_trial(self, phase, block, trial_num, focus, target, correct, 
+    def log_trial(self, phase, block, trial_num, focus, target, correct,
                   gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score,
                   points, instr_index):
         """
-        REQUIRES: ...0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS)...
+        REQUIRES: ...0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS),
+                  target is in window units
         MODIFIES: self, pwd/temp_data
         EFFECTS:  Adds all relevant data of trial to subj_data. Writes all data
                   so far to a temp data file in case program crashes.
@@ -735,7 +736,7 @@ class Experiment:
         self.focuses.append(focus)
         self.phases.append(phase)
         self.blocks.append(block)
-        self.targets.append(target)
+        self.targets.append(target + 1) # convert window units to grip units
         
         instr_index = (np.nan if phase == 'train' else focus + str(instr_index))
         self.instrs.append(instr_index)
@@ -889,8 +890,8 @@ class Experiment:
         END_BLOCK_FEEDBACK_TIME = 3
     
         # fixme: How many trials per train block?
-        # Note: Don't pick a trial target hieght above 0.9, that's too close
-        # to the top of the screen.
+        # Note: Trial targets are in window units! Don't pick a trial target
+        # height above 0.9, that's too close to the top of the screen.
         TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
         NUM_TARGET_REPEATS = 1
         
@@ -924,6 +925,8 @@ class Experiment:
         END_BLOCK_FEEDBACK_TIME = 3 # seconds
         
         # fixme: How many trials per block?
+        # Note: Trial targets are in window units! Don't pick a trial target
+        # height above 0.9, that's too close to the top of the screen.
         TRIAL_TARGETS = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
         NUM_TARGET_REPEATS = 1
         
