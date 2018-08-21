@@ -66,41 +66,42 @@ class Grips:
         self.right_max = 1
     
         # Window units transformation factor
-        self.WINDOW_TO_GRIPFORCE = 100
+        #self.WINDOW_TO_GRIPFORCE = 100
     
-    def calibrate_left(self, max):
-        # REQUIRES: 0 < max < 2
-        # MODIFIES: left_max
-        # EFFECTS:  updates subj's max left force
+    def set_left_max(self, max):
+        """
+        REQUIRES: 0 < max < 2
+        MODIFIES: left_max
+        EFFECTS:  updates subj's max left force
+        """
         
         self.left_max = max
         return
     
-    def calibrate_right(self, max):
-        # REQUIRES: 0 < max < 2
-        # MODIFIES: right_max
-        # EFFECTS:  updates subj's max right force
+    def set_right_max(self, max):
+        """
+        REQUIRES: 0 < max < 2
+        MODIFIES: right_max
+        EFFECTS:  updates subj's max right force
+        """
         
         self.right_max = max
         return
 
     def get_left(self):
-        # EFFECTS: returns activation of left grip normalized by left-hand max
-        #          and transposed into window units with preferred gradation
-        # NOTE:    grip sensor input range is [-1, 1]
+        """
+        EFFECTS: Returns activation of left grip
+        NOTE:    grip sensor input range is [-1, 1]
+        """
         
-        raw = self.sensors.getY() + 1
-        force = (raw / self.left_max) / self.WINDOW_TO_GRIPFORCE
-        return force, raw
+        return self.sensors.getY() + 1
 
     def get_right(self):
-        # EFFECTS: returns activation of right grip normalized by right-hand max
-        #          and transposed into window units with preferred gradation
-        # NOTE:    grip sensor input range is [-1, 1]
-        
-        raw = self.sensors.getX() + 1
-        force = (raw / self.right_max) / self.WINDOW_TO_GRIPFORCE
-        return force, raw
+        """
+        EFFECTS: returns activation of right grip
+        NOTE:    grip sensor input range is [-1, 1]
+        """
+        return self.sensors.getX() + 1
 
     #def get_score(self):
     #    """
@@ -570,7 +571,7 @@ class Experiment:
     
         # solicit max grip force L
         while timer.getTime() > 0:
-            max_left = self.grips.get_left()[1]
+            max_left = self.grips.get_left()
                 
             # fixme: debug
             print(max_left)
