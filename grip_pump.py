@@ -62,8 +62,8 @@ class Grips:
         self.nAxes   = self.sensors.getNumAxes()
     
         # default max values
-        self.left_max  = 1
-        self.right_max = 1
+        #self.left_max  = 1
+        #self.right_max = 1
     
         # Window units transformation factor
         #self.WINDOW_TO_GRIPFORCE = 100
@@ -412,12 +412,22 @@ class Stimuli:
         y_increment = (self.win.monitorFramePeriod / time_interval) \
                        * (trial_response_ypos + 1)
         
+        if trial_response_ypos == -1:
+            # score is zero; don't move target
+            self.trial_response.pos = [0, -1]
+            self.win.flip()
+            return
+        
         # animate subject response
         response_circle_ypos = -1 # bottom of screen
         while response_circle_ypos < trial_response_ypos:
             self.trial_response.pos = [0, response_circle_ypos]
             response_circle_ypos += y_increment
             self.win.flip()
+        
+        # make sure response graphic is exactly where it's supposed to be
+        self.trial_response.pos = [0, trial_response_ypos]
+        self.win.flip()
 
         return
             
@@ -530,9 +540,12 @@ class Experiment:
         self.init_data_lists()
     
     def init_data_lists(self):
-        # EFFECTS: creates lists to hold trial data values (until they are
-        #          packaged in a pd.DataFrame)
-        # NOTE: subj_id, gripLmax, and gripRmax remain constant during experiment
+        """
+        EFFECTS: creates lists to hold trial data values (until they are
+                 packaged in a pd.DataFrame)
+        NOTE:    subj_id, gripLmax, gripRmax, and beta factor remain constant
+                 during experiment
+        """
         
         self.trial_nums    = []
         self.focuses       = []
@@ -542,10 +555,9 @@ class Experiment:
         self.accuracies    = []
         self.grip_scores   = []
         self.targets       = []
-        self.gripLraws     = []
-        self.gripRraws     = []
-        self.gripLnormds   = []
-        self.gripRnormds   = []
+        self.gripLtotals   = []
+        self.gripRtotals   = []
+        self.raw_scores    = []
         self.points_gained = []
     
         return
@@ -569,29 +581,30 @@ class Experiment:
         self.stimuli.calibration_rectangle.setAutoDraw(True)
         counter_text.setAutoDraw(True)
     
-        # solicit max grip force L
+        # solicit total grip force L over calibration time
+        left_total = 0
         while timer.getTime() > 0:
-            max_left = self.grips.get_left()
+            left_total += self.grips.get_left()
                 
             # fixme: debug
-            print(max_left)
+            print(left_total)
             
             # display online rectangle for input
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       max_left]
+                                                       self.grips.get_left()]
             counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
             self.stimuli.win.flip()
             self.check_escaped()
             
-        self.grips.calibrate_left(max_left)
+        self.grips.set_left_max(left_total)
         
         counter_text.setAutoDraw(False)
         self.stimuli.calibration_rectangle.setAutoDraw(False)
 
         #FIXME: debug
-        print("left max: " + str(self.grips.left_max))
+        print("left total max: " + str(self.grips.left_max))
             
         return self.grips.left_max
     
@@ -615,22 +628,23 @@ class Experiment:
         counter_text.setAutoDraw(True)
     
         # solicit max grip force R
+        right_total = 0
         while timer.getTime() > 0:
-            max_right = self.grips.get_right()[1]
+            right_total += self.grips.get_right()
             
             # fixme: debug
-            print(max_right)
+            print(right_total)
             
             # display online rectangle for input
             self.stimuli.calibration_rectangle.size = [self.stimuli.CALIB_RECT_WIDTH,
-                                                       max_right]
+                                                       self.grips.get_right()]
             counter_text.text = str(int(timer.getTime()) + 1)
             
             # refresh window
             self.stimuli.win.flip()
             self.check_escaped()
         
-        self.grips.calibrate_right(max_right)
+        self.grips.set_right_max(right_total)
         
         counter_text.setAutoDraw(False)
         self.stimuli.calibration_rectangle.setAutoDraw(False)
@@ -647,7 +661,7 @@ class Experiment:
                   grips accordingly
         """
         
-        CALIBRATION_INTERVAL = 3 # seconds
+        CALIBRATION_INTERVAL = 3 # MUST BE SAME AS TRIAL_LIMIT
         INSTR_READ_TIME      = 3
         # text to show countdown timer
         countdown_text = visual.TextStim(self.stimuli.win, text="")
@@ -656,10 +670,14 @@ class Experiment:
         
         self.calibrate_grip_L(countdown_text, INSTR_READ_TIME, CALIBRATION_INTERVAL)
         self.calibrate_grip_R(countdown_text, INSTR_READ_TIME, CALIBRATION_INTERVAL)
+        
+        # calculate beta normalization factor
+        # 2 (top of window) / 0.5 (% of max grip in one hand) = 4
+        self.beta = 4 / min(self.grips.right_max, self.grips.left_max)
             
         return
 
-    def calc_force_score(self, Lforce, Rforce):
+    def calc_force_score(self, Ltotal, Rtotal):
         """
         REQUIRES: Lforce, Rforce are numbers
         EFFECTS:  Returns force score in window units!
@@ -669,14 +687,15 @@ class Experiment:
         THRESHOLD_R = self.grips.right_max * 0.01
         THRESHOLD_L = self.grips.left_max * 0.01
         
+        force_sum = Ltotal + Rtotal
         
         # NOTE: - 1 at end is to transform score to psychopy window units
-        if Lforce <= THRESHOLD_L or Rforce <= THRESHOLD_R:
+        if Ltotal <= THRESHOLD_L or Rtotal <= THRESHOLD_R:
             score = -1 # bottom of screen
         else:
-            score = Lforce + Rforce - 1
+            score = -1 + (Ltotal + Rtotal) * self.beta
 
-        return score
+        return score, force_sum
 
     def get_subj_response(self, countdown_timer):
         """
@@ -690,47 +709,45 @@ class Experiment:
         # initialize force totals
         Lforce_total = 0
         Rforce_total = 0
-        Lraw_total   = 0
-        Rraw_total   = 0
 
         while countdown_timer.getTime() > 0:
             timer_text = str(int(countdown_timer.getTime()) + 1)
             self.stimuli.trial_timer_text.text = timer_text
             
             # get grip sensor data
-            Lforce, Lraw = self.grips.get_left()
-            Rforce, Rraw = self.grips.get_right()
+            Lforce = self.grips.get_left()
+            Rforce = self.grips.get_right()
             
-            #fixme: record online bimanual grip activation path for each trial?
+            #fixme: record online bimanual grip activation path for each trial
             
             # calculate force sums
             Lforce_total += Lforce
-            Lraw_total   += Lraw
             Rforce_total += Rforce
-            Rraw_total   += Rraw
             
             #fixme: Debug
-            print "left RAW: %s, right RAW: %s" % (Lraw, Rraw)
             print "left input: %s, right input: %s" % (Lforce, Rforce)
 
             # update left grip online feedback bar
-            self.stimuli.trial_L_bar.height = Lforce_total
+            Lheight = Lforce_total / self.grips.left_max
+            self.stimuli.trial_L_bar.height = Lheight
             self.stimuli.trial_L_bar.pos = [self.stimuli.TRIAL_L_BAR_XPOS,
-                                            (-1 + Lforce_total / 2)]
+                                            (-1 + Lheight / 2)]
             # update right "
-            self.stimuli.trial_R_bar.height = Rforce_total
+            Rheight = Rforce_total / self.grips.right_max
+            self.stimuli.trial_R_bar.height = Rheight
             self.stimuli.trial_R_bar.pos = [self.stimuli.TRIAL_R_BAR_XPOS,
-                                            (-1 + Rforce_total / 2)]
-                                            
-            trial_response = self.calc_force_score(Lforce_total, Rforce_total)
-            self.stimuli.win.flip()
-        
-            self.check_escaped()
+                                            (-1 + Rheight / 2)]
 
-        return trial_response, Lforce_total, Lraw_total, Rforce_total, Rraw_total
+            self.stimuli.win.flip()
+            self.check_escaped()
+        
+        trial_response, raw_response = self.calc_force_score(Lforce_total,
+                                                             Rforce_total)
+
+        return trial_response, Lforce_total, Rforce_total, raw_response
     
     def log_trial(self, phase, block, trial_num, focus, target, correct,
-                  gripLraw, gripLnormd, gripRraw, gripRnormd, grip_score,
+                  raw_response, gripLtotal, gripRtotal, grip_score,
                   points, instr_index):
         """
         REQUIRES: ...0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS),
@@ -753,10 +770,9 @@ class Experiment:
         # fill in trial response data
         #   convert window units [-1,1] to grip units [0,2]
         self.grip_scores.append(grip_score + 1)
-        self.gripLraws.append(gripLraw)
-        self.gripRraws.append(gripRraw)
-        self.gripLnormds.append(gripLnormd)
-        self.gripRnormds.append(gripRnormd)
+        self.raw_scores.append(raw_response)
+        self.gripLtotals.append(gripLtotal)
+        self.gripRtotals.append(gripRtotal)
         self.accuracies.append(correct)
         self.points_gained.append(points)
 
@@ -771,12 +787,12 @@ class Experiment:
                      'grip_score': self.grip_scores,
                      'points': self.points_gained,
                      'target': self.targets,
-                     'gripLraw': self.gripLraws,
-                     'gripRraw': self.gripRraws,
-                     'gripLnormd': self.gripLnormds,
-                     'gripRnormd': self.gripRnormds,
+                     'raw_score': self.raw_scores,
+                     'gripLtotal': self.gripLtotals,
+                     'gripRtotal': self.gripRtotals,
                      'gripLmax': [self.grips.left_max] * len(self.grip_scores),
-                     'gripRmax': [self.grips.right_max] * len(self.grip_scores)}
+                     'gripRmax': [self.grips.right_max] * len(self.grip_scores),
+                     'beta_factor': [self.beta] * len(self.grip_scores)}
 
         temp_DF = pd.DataFrame(temp_data)
         temp_DF.to_csv(self.TEMP_FILE, sep='\t')
@@ -799,12 +815,13 @@ class Experiment:
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
         self.wait(FIXATION_LIMIT)
-        self.stimuli.disp_trial(target_ypos, online=True)
+        early_trial = (True if trial_num < 5 and block == 1 else False)
+        self.stimuli.disp_trial(target_ypos, online=early_trial)
     
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
     
         # SUBJ RESPONSE
-        trial_response, Lforce, Lraw, Rforce, Rraw = self.get_subj_response(timer)
+        trial_response, Ltotal, Rtotal, raw_score = self.get_subj_response(timer)
     
         # DATA LOGGING
         # compute accuracy
@@ -813,7 +830,8 @@ class Experiment:
     
         # log data (publish temp results file)
         self.log_trial('train', block, trial_num, np.nan, target_ypos, accurate,
-                       Lraw, Lforce, Rraw, Rforce, trial_response, np.nan, np.nan)
+                       raw_score, Ltotal, Rtotal, trial_response,
+                       np.nan, np.nan)
     
         #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
@@ -855,7 +873,7 @@ class Experiment:
         timer = psychopy.clock.CountdownTimer(TRIAL_LIMIT)
         
         # SUBJ RESPONSE
-        trial_response, Lforce, Lraw, Rforce, Rraw = self.get_subj_response(timer)
+        trial_response, Ltotal, Rtotal, raw_score = self.get_subj_response(timer)
     
         # DATA LOGGING
         # compute accuracy
@@ -871,7 +889,8 @@ class Experiment:
         
         # log data (publish temp results file)
         self.log_trial('test', block, trial_num, focus, target_ypos, accurate,
-                       Lraw, Lforce, Rraw, Rforce, trial_response, points, instr_index)
+                       raw_score, Ltotal, Rtotal, trial_response, points,
+                       instr_index)
 
         #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
@@ -1070,12 +1089,12 @@ class Experiment:
                 'grip_score': self.grip_scores,
                 'points': self.points_gained,
                 'target': self.targets,
-                'gripLraw': self.gripLraws,
-                'gripRraw': self.gripRraws,
-                'gripLnormd': self.gripLnormds,
-                'gripRnormd': self.gripRnormds,
+                'raw_score': self.raw_scores,
+                'gripLtotal': self.gripLtotals,
+                'gripRtotal': self.gripRtotals,
                 'gripLmax': [self.grips.left_max] * len(self.grip_scores),
-                'gripRmax': [self.grips.right_max] * len(self.grip_scores)}
+                'gripRmax': [self.grips.right_max] * len(self.grip_scores),
+                'beta_factor': [self.beta] * len(self.grip_scores)}
                 
         subj_data = pd.DataFrame(data)
         subj_data.to_csv(self.SESSION_FILE, sep='\t')
