@@ -180,8 +180,8 @@ class Stimuli:
         self.trial_feedback_miss = visual.TextStim(self.win, text="Miss!",
                                                    color="red",
                                                    pos=[self.TRIAL_FEEDBACK_XPOS,0])
-        self.trial_feedback_toohigh = visual.TextStim(self.win, text="Too high!",
-                                                      color="white",
+        self.trial_feedback_outside = visual.TextStim(self.win, text="Out of bounds!",
+                                                      color="red",
                                                       pos=[self.TRIAL_FEEDBACK_XPOS,0])
                                                    
         self.TRIAL_POINTS_XPOS = -0.5
@@ -459,10 +459,9 @@ class Stimuli:
             self.trial_feedback_hit.pos = [self.TRIAL_FEEDBACK_XPOS,
                                            trial_response_ypos]
             self.trial_feedback_hit.draw()
-        elif trial_response_ypos > 1:
-            # above top of window, display Too high!
-            self.trial_feedback_toohigh.pos = [self.TRIAL_FEEDBACK_XPOS, 0]
-            self.trial_feedback_toohigh.draw()
+        elif trial_response_ypos > 1 or trial_response_ypos == -1:
+            # above top of window or didn't meet grip threshold
+            self.trial_feedback_outside.draw()
         else:
             # display Miss!
             self.trial_feedback_miss.pos = [self.TRIAL_FEEDBACK_XPOS,
@@ -479,6 +478,11 @@ class Stimuli:
         MODIFIES: self
         EFFECTS:  Displays points earned in this trial
         """
+        
+        # display out of bounds
+        if trial_response_ypos > 1 or trial_response_ypos == -1:
+            # above top of window or didn't meet grip threshold
+            self.trial_feedback_outside.draw()
         
         # display points for trial (no points during training)
         if points != 0:
@@ -563,6 +567,7 @@ class Experiment:
         self.phases        = []
         self.blocks        = []
         self.accuracies    = []
+        self.out_of_bounds = []
         self.grip_scores   = []
         self.targets       = []
         self.gripLtotals   = []
@@ -757,7 +762,7 @@ class Experiment:
         return trial_response, Lforce_total, Rforce_total, raw_response
     
     def log_trial(self, phase, block, trial_num, focus, target, correct,
-                  raw_response, gripLtotal, gripRtotal, grip_score,
+                  out_of_bounds, raw_response, gripLtotal, gripRtotal, grip_score,
                   points, instr_index):
         """
         REQUIRES: ...0 <= instr_index < len(Stimuli.NUM_FOCUS_INSTRUCTIONS),
@@ -785,6 +790,7 @@ class Experiment:
         self.gripRtotals.append(gripRtotal)
         self.accuracies.append(correct)
         self.points_gained.append(points)
+        self.out_of_bounds.append(out_of_bounds)
 
         # create temp file in case of crash
         temp_data = {'subject': [self.subj_id] * len(self.grip_scores),
@@ -794,6 +800,7 @@ class Experiment:
                      'phase': self.phases,
                      'block': self.blocks,
                      'accuracy': self.accuracies,
+                     'out_of_bounds': self.out_of_bounds,
                      'grip_score': self.grip_scores,
                      'points': self.points_gained,
                      'target': self.targets,
@@ -837,10 +844,11 @@ class Experiment:
         # compute accuracy
         distance = abs(trial_response - target_ypos)
         accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
+        out_of_bounds = (1 if trial_response == -1 or trial_response > 1 else 0)
     
         # log data (publish temp results file)
         self.log_trial('train', block, trial_num, np.nan, target_ypos, accurate,
-                       raw_score, Ltotal, Rtotal, trial_response,
+                       out_of_bounds, raw_score, Ltotal, Rtotal, trial_response,
                        np.nan, np.nan)
     
         #fixme: debug
@@ -889,9 +897,10 @@ class Experiment:
         # compute accuracy
         distance = abs(trial_response - target_ypos)
         accurate = (1 if distance <= ACCURACY_THRESHOLD else 0)
+        out_of_bounds = (1 if trial_response == -1 or trial_response > 1 else 0)
         
         # update subj point total, no negative points
-        if (1 - distance) > 0:
+        if (1 - distance) > 0 and not out_of_bounds:
             points = int((1 - distance) * 100)
             self.subj_points += points
         else:
@@ -899,8 +908,8 @@ class Experiment:
         
         # log data (publish temp results file)
         self.log_trial('test', block, trial_num, focus, target_ypos, accurate,
-                       raw_score, Ltotal, Rtotal, trial_response, points,
-                       instr_index)
+                       out_of_bounds, raw_score, Ltotal, Rtotal, trial_response,
+                       points, instr_index)
 
         #fixme: debug
         print('\n' + "trial response: " + str(trial_response))
@@ -1096,6 +1105,7 @@ class Experiment:
                 'instr_last_seen': self.instrs,
                 'block': self.blocks,
                 'accuracy': self.accuracies,
+                'out_of_bounds': self.out_of_bounds,
                 'grip_score': self.grip_scores,
                 'points': self.points_gained,
                 'target': self.targets,
