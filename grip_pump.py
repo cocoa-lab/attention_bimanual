@@ -168,7 +168,7 @@ class Stimuli:
                                        height=0, pos=[self.TRIAL_R_BAR_XPOS, 0],
                                        fillColor="orange")
 
-        TRIAL_RESPONSE_RADIUS = 0.1
+        TRIAL_RESPONSE_RADIUS = 0.05
         self.trial_response = visual.Circle(self.win, radius=TRIAL_RESPONSE_RADIUS,
                                             pos=[0,-1], fillColor="blue")
                                         
@@ -425,7 +425,7 @@ class Stimuli:
             response_circle_ypos += y_increment
             self.win.flip()
         
-        # make sure response graphic is exactly where it's supposed to be
+        # make sure response graphic ends up exactly where it's supposed to be
         self.trial_response.pos = [0, trial_response_ypos]
         self.win.flip()
 
@@ -447,7 +447,7 @@ class Stimuli:
 
         return
 
-    def disp_trial_feedback(self, points, correct, trial_response_ypos):
+    def disp_trial_hitmiss(self, correct, trial_response_ypos):
         """
         REQUIRES: correct is a bool, -1 < trial_response_ypos < 1
         MODIFIES: self
@@ -461,15 +461,25 @@ class Stimuli:
             self.trial_feedback_hit.draw()
         elif trial_response_ypos > 1:
             # above top of window, display Too high!
-            self.trial_feedback_toohigh.pos = [self.TRIAL_FEEDBACK_XPOS,
-                                               0]
+            self.trial_feedback_toohigh.pos = [self.TRIAL_FEEDBACK_XPOS, 0]
             self.trial_feedback_toohigh.draw()
         else:
             # display Miss!
             self.trial_feedback_miss.pos = [self.TRIAL_FEEDBACK_XPOS,
                                             trial_response_ypos]
             self.trial_feedback_miss.draw()
+        
+        self.win.flip()
 
+        return
+
+    def disp_trial_points(self, points, trial_response_ypos):
+        """
+        REQUIRES: -1 < trial_response_ypos < 1, points >= 0
+        MODIFIES: self
+        EFFECTS:  Displays points earned in this trial
+        """
+        
         # display points for trial (no points during training)
         if points != 0:
             points = '+' + str(points)
@@ -478,7 +488,7 @@ class Stimuli:
             self.trial_points.draw()
         
         self.win.flip()
-
+    
         return
     
     def disp_focus_feedback(self, focus, instr_index):
@@ -810,7 +820,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
     
-        ACCURACY_THRESHOLD = 0.2 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.15 # "transformed grip space" (window) units
     
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
@@ -842,7 +852,7 @@ class Experiment:
         self.stimuli.trial_timer_text.setAutoDraw(False)
         
         self.stimuli.disp_trial_response_animation(trial_response, ANIMATION_TIME)
-        self.stimuli.disp_trial_feedback(0, accurate, trial_response)
+        self.stimuli.disp_trial_hitmiss(accurate, trial_response)
         self.wait(FEEDBACK_LIMIT)
         
         self.stimuli.hide_trial_graphics()
@@ -863,7 +873,7 @@ class Experiment:
         FEEDBACK_LIMIT = 3
         ANIMATION_TIME = 0.25
         
-        ACCURACY_THRESHOLD = 0.2 # "transformed grip space" (window) units
+        ACCURACY_THRESHOLD = 0.15 # "transformed grip space" (window) units
         
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
@@ -901,7 +911,7 @@ class Experiment:
         self.stimuli.trial_timer_text.setAutoDraw(False)
         
         self.stimuli.disp_trial_response_animation(trial_response, ANIMATION_TIME)
-        self.stimuli.disp_trial_feedback(points, accurate, trial_response)
+        self.stimuli.disp_trial_points(points, trial_response)
         self.wait(FEEDBACK_LIMIT)
         
         self.stimuli.hide_trial_graphics()
@@ -1140,7 +1150,8 @@ def main():
                        
     # PATH INFORMATION
     # FIXME: need correct working directory!
-    DATA_DIR = "C:/Users/seanpaul/Box Sync/grip"
+    DATA_DIR = "C:/Users/seanpaul/Desktop/Box Sync/grip"
+    os.chdir(DATA_DIR) # fixme: directory check
 
     # SUBJECT INFORMATION
     SESSION_NAME = 'bimanual_grip_pump'
