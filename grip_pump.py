@@ -103,16 +103,6 @@ class Grips:
         """
         return self.sensors.getX() + 1
 
-    #def get_score(self):
-    #    """
-    #    EFFECTS: Calculates subject response score using the equation
-    #             specified in the docstring and subject's max grip strengths.
-    #    """
-    #
-    #    # NOTE: - 1 at end is to transform score to psychopy window units
-    #    score = (self.get_left()[0] ** 2) + (self.get_right()[0] ** 2) - 1
-    #    return score
-
 
 # STIMULI MANAGER OBJECT
 class Stimuli:
@@ -548,6 +538,8 @@ class Experiment:
                             % (session_name, subj_num)
         self.TEMP_FILE = data_dir + SEPARATOR + 'temp_outputs/%s_%s_temp_output.tsv'\
                          % (session_name, subj_num)
+        self.ONLINE_FILE = data.dir + SEPARATOR + 'data/online/%s_%s_online.tsv'\
+                           % (session_name, subj_num)
         
         self.stimuli = Stimuli() # opens psychopy window
         self.grips = Grips()
@@ -561,6 +553,7 @@ class Experiment:
                  during experiment
         """
         
+        # trial and response information
         self.trial_nums    = []
         self.focuses       = []
         self.instrs        = []
@@ -574,6 +567,12 @@ class Experiment:
         self.gripRtotals   = []
         self.raw_scores    = []
         self.points_gained = []
+        
+        # online gripforce information
+        self.online_Ls = []
+        self.online_Rs = []
+        self.online_L_force = []
+        self.online_R_force = []
     
         return
     
@@ -716,7 +715,7 @@ class Experiment:
         """
         REQUIRES: countdown_timer is psychopy.clock.CountdownTimer
                   Trial graphics are built (and showing)
-        MODIFIES: stimuli, grips
+        MODIFIES: stimuli, grips, self.online_L/R_force
         EFFECTS:  Updates trial graphics as subj responds using grip sensors.
                   Returns calculated response score of trial.
         """
@@ -733,7 +732,9 @@ class Experiment:
             Lforce = self.grips.get_left()
             Rforce = self.grips.get_right()
             
-            #fixme: record online bimanual grip activation path for each trial
+            # record online bimanual grip activation path
+            self.online_L_force.append(Lforce)
+            self.online_R_force.append(Rforce)
             
             # calculate force sums
             Lforce_total += Lforce
@@ -791,6 +792,10 @@ class Experiment:
         self.accuracies.append(correct)
         self.points_gained.append(points)
         self.out_of_bounds.append(out_of_bounds)
+        
+        # online grip force data (in temp file, won't be in completed data file)
+        self.online_Ls.append(self.online_L_force)
+        self.online_Rs.append(self.online_R_force)
 
         # create temp file in case of crash
         temp_data = {'subject': [self.subj_id] * len(self.grip_scores),
@@ -809,7 +814,11 @@ class Experiment:
                      'gripRtotal': self.gripRtotals,
                      'gripLmax': [self.grips.left_max] * len(self.grip_scores),
                      'gripRmax': [self.grips.right_max] * len(self.grip_scores),
-                     'beta_factor': [self.beta] * len(self.grip_scores)}
+                     'beta_factor': [self.beta] * len(self.grip_scores),
+                     'gripLonline': self.online_Ls,
+                     'gripRonline': self.online_Rs,
+                     'frame_duration': [self.stimuli.monitorFramePeriod]\
+                                       * len(self.grip_scores)}
 
         temp_DF = pd.DataFrame(temp_data)
         temp_DF.to_csv(self.TEMP_FILE, sep='\t')
