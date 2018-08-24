@@ -545,9 +545,16 @@ class Experiment:
         self.subj_id = subj_num
         SEPARATOR = '/'
         self.SESSION_FILE = data_dir + SEPARATOR + 'data/%s_%s_output.tsv'\
-                            % (session_name, subj_num)
+                                                    % (session_name, subj_num)
         self.TEMP_FILE = data_dir + SEPARATOR + 'temp_outputs/%s_%s_temp_output.tsv'\
-                         % (session_name, subj_num)
+                                                 % (session_name, subj_num)
+        # files for online grip force (no temp file, overwrite each trial)
+        online_filename_left = 'data/online/%s_%s_online_left.tsv'\
+                                % (session_name, subj_num)
+        online_filename_right = 'data/online/%s_%s_online_right.tsv'\
+                                % (session_name, subj_num)
+        self.ONLINE_FILE_LEFT = data_dir + SEPARATOR + online_filename_left
+        self.ONLINE_FILE_RIGHT = data_dir + SEPARATOR + online_filename_right
         
         self.stimuli = Stimuli() # opens psychopy window
         self.grips = Grips()
@@ -561,6 +568,7 @@ class Experiment:
                  during experiment
         """
         
+        # standard trial data
         self.trial_nums    = []
         self.focuses       = []
         self.instrs        = []
@@ -574,6 +582,12 @@ class Experiment:
         self.gripRtotals   = []
         self.raw_scores    = []
         self.points_gained = []
+        
+        # online grip force data
+        self.gripLonline = {}
+        self.gripRonline = {}
+        # keep track of which trial we're measuring (see get_subj_response)
+        self.trial_iterator = 0
     
         return
     
@@ -721,9 +735,11 @@ class Experiment:
                   Returns calculated response score of trial.
         """
         
-        # initialize force totals
+        # initialize force totals and online lists
         Lforce_total = 0
         Rforce_total = 0
+        self.gripLonline[self.trial_iterator] = []
+        self.gripRonline[self.trial_iterator] = []
 
         while countdown_timer.getTime() > 0:
             timer_text = str(int(countdown_timer.getTime()) + 1)
@@ -733,7 +749,9 @@ class Experiment:
             Lforce = self.grips.get_left()
             Rforce = self.grips.get_right()
             
-            #fixme: record online bimanual grip activation path for each trial
+            #record online bimanual grip activation path for this trial frame
+            self.gripLonline[self.trial_iterator].append(Lforce)
+            self.gripRonline[self.trial_iterator].append(Rforce)
             
             # calculate force sums
             Lforce_total += Lforce
@@ -758,6 +776,14 @@ class Experiment:
         
         trial_response, raw_response = self.calc_force_score(Lforce_total,
                                                              Rforce_total)
+        # fixme: debug
+        print("\nnum left online datums: " + str(len(self.gripLonline\
+                                                     [self.trial_iterator])))
+        print("num right online datums: " + str(len(self.gripRonline\
+                                                    [self.trial_iterator])))
+        
+        # increment trial iterator (absolute trial index)
+        self.trial_iterator += 1
 
         return trial_response, Lforce_total, Rforce_total, raw_response
     
@@ -809,11 +835,48 @@ class Experiment:
                      'gripRtotal': self.gripRtotals,
                      'gripLmax': [self.grips.left_max] * len(self.grip_scores),
                      'gripRmax': [self.grips.right_max] * len(self.grip_scores),
-                     'beta_factor': [self.beta] * len(self.grip_scores)}
+                     'beta_factor': [self.beta] * len(self.grip_scores),
+                     'frame_duration': [self.stimuli.win.monitorFramePeriod]\
+                                        * len(self.grip_scores)}
 
         temp_DF = pd.DataFrame(temp_data)
         temp_DF.to_csv(self.TEMP_FILE, sep='\t')
+        
+        self.log_online_forces()
     
+        return
+                                        
+    def log_online_forces(self):
+        """
+        REQUIRES: at least one trial has been run (len(self.gripLonline) > 0)
+        MODIFIES: pwd/data/online, self.gripLonline, self.gripRonline
+        EFFECTS:  Writes all current online grip force data to two csv's, one
+                  for left and one for right.
+        """
+
+        # Correct trials with not the same length (prevent pandas errors)
+        # (NOTE: this means that framerate is changing over course of experiment)
+        lengths_L = set([len(trial) for trial in self.gripLonline.values()])
+        lengths_R = set([len(trial) for trial in self.gripRonline.values()])
+        
+        if len(lengths_L) > 1:
+            # get every trial list to same length so pandas is happy
+            for key in self.gripLonline.keys():
+                while len(self.gripLonline[key]) < max(lengths_L):
+                    self.gripLonline[key].append(np.nan)
+
+        if len(lengths_R) > 1:
+            # do the same for R
+            for key in self.gripRonline.keys():
+                while len(self.gripRonline[key]) < max(lengths_R):
+                    self.gripRonline[key].append(np.nan)
+
+        # write online force files
+        L_online_DF = pd.DataFrame(self.gripLonline)
+        R_online_DF = pd.DataFrame(self.gripRonline)
+        L_online_DF.to_csv(self.ONLINE_FILE_LEFT, sep='\t')
+        R_online_DF.to_csv(self.ONLINE_FILE_RIGHT, sep='\t')
+
         return
 
     def run_train_trial(self, block, trial_num, target_ypos):
@@ -832,6 +895,7 @@ class Experiment:
         # FIXATION AND TRIAL GRAPHICS
         self.stimuli.disp_fixation()
         self.wait(FIXATION_LIMIT)
+        # only show online feedback bars in first 5 trials
         early_trial = (True if trial_num < 5 and block == 1 else False)
         self.stimuli.disp_trial(target_ypos, online=early_trial)
     
@@ -1114,10 +1178,14 @@ class Experiment:
                 'gripRtotal': self.gripRtotals,
                 'gripLmax': [self.grips.left_max] * len(self.grip_scores),
                 'gripRmax': [self.grips.right_max] * len(self.grip_scores),
-                'beta_factor': [self.beta] * len(self.grip_scores)}
+                'beta_factor': [self.beta] * len(self.grip_scores),
+                'frame_duration': [self.stimuli.win.monitorFramePeriod]\
+                                   * len(self.grip_scores)}
                 
         subj_data = pd.DataFrame(data)
         subj_data.to_csv(self.SESSION_FILE, sep='\t')
+        
+        # online grip force files already written
         
         return
 
