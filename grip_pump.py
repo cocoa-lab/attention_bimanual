@@ -718,7 +718,7 @@ class Experiment:
         
         force_sum = Ltotal + Rtotal
         
-        # NOTE: - 1 at end is to transform score to psychopy window units
+        # NOTE: -1 to transform score to psychopy window units
         if Ltotal <= THRESHOLD_L or Rtotal <= THRESHOLD_R:
             score = -1 # bottom of screen
         else:
@@ -738,8 +738,12 @@ class Experiment:
         # initialize force totals and online lists
         Lforce_total = 0
         Rforce_total = 0
-        self.gripLonline[self.trial_iterator] = []
-        self.gripRonline[self.trial_iterator] = []
+        self.gripLonline[(self.trial_iterator, 'force')] = []
+        self.gripRonline[(self.trial_iterator, 'force')] = []
+        
+        # start recording frame intervals
+        self.stimuli.win.recordFrameIntervals = True
+        frame_ints_len = len(self.stimuli.win.frameIntervals)
 
         while countdown_timer.getTime() > 0:
             timer_text = str(int(countdown_timer.getTime()) + 1)
@@ -750,8 +754,8 @@ class Experiment:
             Rforce = self.grips.get_right()
             
             #record online bimanual grip activation path for this trial frame
-            self.gripLonline[self.trial_iterator].append(Lforce)
-            self.gripRonline[self.trial_iterator].append(Rforce)
+            self.gripLonline[(self.trial_iterator, 'force')].append(Lforce)
+            self.gripRonline[(self.trial_iterator, 'force')].append(Rforce)
             
             # calculate force sums
             Lforce_total += Lforce
@@ -774,13 +778,14 @@ class Experiment:
             self.stimuli.win.flip()
             self.check_escaped()
         
+        # note frame intervals for trial and stop recording
+        self.stimuli.win.recordFrameIntervals = False
+        self.frame_ints = self.stimuli.win.frameIntervals[frame_ints_len:]
+        self.gripLonline[(self.trial_iterator, 'time')] = self.frame_ints
+        self.gripRonline[(self.trial_iterator, 'time')] = self.frame_ints
+        
         trial_response, raw_response = self.calc_force_score(Lforce_total,
                                                              Rforce_total)
-        # fixme: debug
-        print("\nnum left online datums: " + str(len(self.gripLonline\
-                                                     [self.trial_iterator])))
-        print("num right online datums: " + str(len(self.gripRonline\
-                                                    [self.trial_iterator])))
         
         # increment trial iterator (absolute trial index)
         self.trial_iterator += 1
