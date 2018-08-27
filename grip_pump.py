@@ -587,7 +587,7 @@ class Experiment:
         self.gripLonline = {}
         self.gripRonline = {}
         # keep track of which trial we're measuring (see get_subj_response)
-        self.trial_iterator = 0
+        self.trial_iterator = 1
     
         return
     
@@ -781,6 +781,8 @@ class Experiment:
         # note frame intervals for trial and stop recording
         self.stimuli.win.recordFrameIntervals = False
         self.frame_ints = self.stimuli.win.frameIntervals[frame_ints_len:]
+        # calculate time stamps and add to online data
+        self.frame_ints = list(np.cumsum(self.frame_ints))
         self.gripLonline[(self.trial_iterator, 'time')] = self.frame_ints
         self.gripRonline[(self.trial_iterator, 'time')] = self.frame_ints
         
