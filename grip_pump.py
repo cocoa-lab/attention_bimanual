@@ -120,7 +120,7 @@ class Stimuli:
     Displays all stimuli, instructions, and feedback. Hosts all graphics
     necessary for those things.
     """
-    
+
     def __init__(self):
         """
         Initializes psychopy window.
@@ -133,34 +133,34 @@ class Stimuli:
                                  monitor='testMonitor', color="black",
                                  colorSpace='rgb', blendMode='avg',
                                  useFBO=True, winType='pyglet')
-    
+
     # GRAPHICS BUILDING
     def build_fixationpoint(self):
-    
+
         self.fixation = visual.TextStim(self.win, pos=[0,0], text="+")
-    
+
         return
 
     def build_trial_graphics(self):
-        
+
         self.build_fixationpoint()
-        
+
         #TRIAL_POLE_WIDTH  = 0.1
         #TRIAL_POLE_HEIGHT = 2  # the entire window
         #self.trial_pole = visual.Rect(self.win, width=TRIAL_POLE_WIDTH,
         #                              height=TRIAL_POLE_HEIGHT, pos=[0,0],
         #                              fillColor="grey", lineColor="grey")
-                                      
+
         TRIAL_TARGET_FILENAME = "target.png"
         TRIAL_TARGET_SIZE = 0.4
         self.trial_target = visual.ImageStim(self.win, image=TRIAL_TARGET_FILENAME,
                                              pos=[0,0], size=TRIAL_TARGET_SIZE)
-        
+
         # online grip feedback bars
         TRIAL_BARS_WIDTH = 0.1
         self.TRIAL_L_BAR_XPOS = -0.9
         self.TRIAL_R_BAR_XPOS = 0.9
-        
+
         self.trial_L_bar = visual.Rect(self.win, width=TRIAL_BARS_WIDTH,
                                        height=0, pos=[self.TRIAL_L_BAR_XPOS, 0],
                                        fillColor="orange")
@@ -171,9 +171,9 @@ class Stimuli:
         TRIAL_RESPONSE_RADIUS = 0.05
         self.trial_response = visual.Circle(self.win, radius=TRIAL_RESPONSE_RADIUS,
                                             pos=[0,-1], fillColor="blue")
-                                        
+
         self.TRIAL_FEEDBACK_XPOS = 0.6
-        
+
         self.trial_feedback_hit  = visual.TextStim(self.win, text="Hit!",
                                                    color="green",
                                                    pos=[self.TRIAL_FEEDBACK_XPOS,0])
@@ -183,35 +183,35 @@ class Stimuli:
         self.trial_feedback_outside = visual.TextStim(self.win, text="Out of bounds!",
                                                       color="red",
                                                       pos=[self.TRIAL_FEEDBACK_XPOS,0])
-                                                   
+
         self.TRIAL_POINTS_XPOS = -0.5
-        
+
         self.trial_points = visual.TextStim(self.win, text="+",
                                             pos=[self.TRIAL_POINTS_XPOS, 0])
-                                                   
+
         TRIAL_TIMER_XPOS = -0.75
         TRIAL_TIMER_YPOS = 0.75
         self.trial_timer_text = visual.TextStim(self.win, text="",
                                                 pos=[TRIAL_TIMER_XPOS,
                                                      TRIAL_TIMER_YPOS])
-        
+
         return
-    
+
     def build_start_instructions(self):
         # Builds start-of-experiment instructions to window buffer.
-        
+
         INSTRUCTIONS = "[INSERT INTRODUCTION INSTRUCTIONS HERE]"
-        
+
         self.exp_instructions = visual.TextStim(self.win, text=INSTRUCTIONS)
         return
-    
+
     def build_calibration_instructions(self):
         # Builds calibration instructions to the window buffer.
         INSTR_L = "CALIBRATION: Using your LEFT hand only, squeeze the LEFT\
-                   grip as hard as you can."
+                   grip as hard as you can for 3 seconds."
         INSTR_R = "CALIBRATION: Using your RIGHT hand only, squeeze the RIGHT\
-                   grip as hard as you can."
-    
+                   grip as hard as you can for 3 seconds."
+
         self.calibrate_L_instr = visual.TextStim(self.win, text=INSTR_L)
         self.calibrate_R_instr = visual.TextStim(self.win, text=INSTR_R)
 
@@ -222,46 +222,46 @@ class Stimuli:
         self.calibration_rectangle = visual.Rect(self.win, fillColor="orange",
                                                  pos=[0, CALIB_RECT_YPOS],
                                                  size=[self.CALIB_RECT_WIDTH,0])
-        
+
         return
-    
+
     def build_train_instructions(self):
         """
         MODIFIES: self
         EFFECTS:  Instantiates text for train phase instructions.
         """
-        
+
         INSTRUCTIONS = "[INSERT TRAINING INSTRUCTIONS HERE]"
-    
+
         self.train_instructions = visual.TextStim(self.win, text=INSTRUCTIONS)
-    
+
         return
-    
+
     def build_test_instructions_I(self):
         """
         MODIFIES: self
         EFFECTS:  Instantiates text for Internal test phase instructions.
         """
-    
+
         INSTRUCTIONS = "[FOCUS ON YOUR HANDS TO PERFORM WELL ON THE TASK]"
-    
+
         self.test_instructions_I = visual.TextStim(self.win, text=INSTRUCTIONS)
-    
+
         return
-    
+
     def build_test_instructions_E(self):
         """
         MODIFIES: self
         EFFECTS:  Instantiates text for External test phase instructions.
         """
-    
+
         INSTRUCTIONS = "[FOCUS ON THE BARS/TARGET POSITION TO PERFORM WELL ON\
                         THE TASK]"
-    
+
         self.test_instructions_E = visual.TextStim(self.win, text=INSTRUCTIONS)
-    
+
         return
-    
+
     def build_block_instructions(self):
         """
         MODIFIES: self
@@ -270,9 +270,9 @@ class Stimuli:
         """
         self.block_instructions = visual.TextStim(self.win, text="[INSERT BLOCK\
                                                                   INSTRUCTIONS]")
-        
+
         return
-    
+
     def build_point_total_feedback(self):
         """
         MODIFIES: self
@@ -280,13 +280,13 @@ class Stimuli:
                   of each block.
         """
         POINTS_TEXT_YPOS = 0.5 # window units
-        
+
         self.point_total_text = visual.TextStim(self.win, text="[points!]",
                                                 pos=[0, POINTS_TEXT_YPOS],
                                                 color='yellow')
-        
+
         return
-    
+
     def build_focus_feedback(self):
         """
         MODIFIES: self
@@ -294,9 +294,9 @@ class Stimuli:
                   failed trial.
         NOTE:     AFTER DATA COLLECTION STARTED, do not mess with order of these
                   instructions in their lists! Needed for data analysis.
-                  
+
         """
-        
+
         self.INTERNAL_FEEDBACK = ["Try squeezing your hands better",
                                   "Really focus on your fingers!",
                                   "Pay attention to your hand/arm muscles",
@@ -306,19 +306,19 @@ class Stimuli:
                                   "Note the distance between the target and your\
                                    response.",
                                   "Attend to the height of the target"]
-                                  
+
         # check if number of instructions are same for each focus condition
         WARNING_MSG = "WARNING! There isn't an equal number of internal vs external\
                        focus instructions. Please correct this in\
                        Stimuli.build_focus_feedback!"
         assert len(self.INTERNAL_FEEDBACK) == len(self.EXTERNAL_FEEDBACK), WARNING_MSG
-        
+
         self.NUM_FOCUS_INSTRUCTIONS = len(self.INTERNAL_FEEDBACK)
-                                  
+
         self.focus_feedback = visual.TextStim(self.win)
-    
+
         return
-    
+
     # GRAPHICS DISPLAY INTERFACE
     def disp_start(self):
         """
@@ -326,28 +326,28 @@ class Stimuli:
         MODIFIES: self
         EFFECTS: Displays start-of-experiment instructions
         """
-        
+
         self.build_start_instructions()
-        
+
         self.exp_instructions.draw(win=self.win)
         self.win.flip()
-    
+
         return
-    
+
     def disp_test_instructions(self, condition):
         """
         REQUIRES: self.test_instructions_I/E are built
         MODIFIES: self
         EFFECTS:  Displays the test phase block instructions for given condition
         """
-    
+
         if condition == 'I':
             self.test_instructions_I.draw()
         else:
             self.test_instructions_E.draw()
 
         self.win.flip()
-                
+
         return
 
     def disp_block_instructions(self, block_num):
@@ -356,11 +356,11 @@ class Stimuli:
         MODIFIES: self
         EFFECTS:  Displays the block # to the screen.
         """
-    
+
         self.block_instructions.text = "Block #" + str(block_num)
         self.block_instructions.draw()
         self.win.flip()
-    
+
         return
 
     def disp_fixation(self):
@@ -369,10 +369,10 @@ class Stimuli:
         MODIFIES: self
         EFFECTS:  displays the fixation dot for the specified interval.
         """
-        
+
         self.fixation.draw()
         self.win.flip()
-        
+
         return
 
     def disp_trial(self, target_ypos, online=True):
@@ -386,16 +386,16 @@ class Stimuli:
         if online:
             self.trial_L_bar.setAutoDraw(True)
             self.trial_R_bar.setAutoDraw(True)
-        
+
         self.trial_timer_text.setAutoDraw(True)
-        
+
         # target
         #self.trial_pole.setAutoDraw(True)
         self.trial_target.pos = [0, target_ypos]
         self.trial_target.setAutoDraw(True)
 
         return
-            
+
     def disp_trial_response_animation(self, trial_response_ypos, time_interval):
         """
         REQUIRES: -1 < target_ypos < 1, 0 < time_interval, self.trial_response
@@ -405,19 +405,19 @@ class Stimuli:
                   response_ypos location.
         NOTE:     'escape' keypress NOT enabled during this animation.
         """
-    
+
         self.trial_response.setAutoDraw(True)
-        
+
         # calculate smoothest window step interval
         y_increment = (self.win.monitorFramePeriod / time_interval) \
                        * (trial_response_ypos + 1)
-        
+
         if trial_response_ypos == -1:
             # score is zero; don't move target
             self.trial_response.pos = [0, -1]
             self.win.flip()
             return
-        
+
         # animate subject response
         response_circle_ypos = -1 # bottom of screen
         while response_circle_ypos < trial_response_ypos:
@@ -740,7 +740,7 @@ class Experiment:
         Rforce_total = 0
         self.gripLonline[(self.trial_iterator, 'force')] = []
         self.gripRonline[(self.trial_iterator, 'force')] = []
-        
+
         # start recording frame intervals
         self.stimuli.win.recordFrameIntervals = True
         frame_ints_len = len(self.stimuli.win.frameIntervals)
@@ -748,11 +748,11 @@ class Experiment:
         while countdown_timer.getTime() > 0:
             timer_text = str(int(countdown_timer.getTime()) + 1)
             self.stimuli.trial_timer_text.text = timer_text
-            
+
             # get grip sensor data
             Lforce = self.grips.get_left()
             Rforce = self.grips.get_right()
-            
+
             #record online bimanual grip activation path for this trial frame
             self.gripLonline[(self.trial_iterator, 'force')].append(Lforce)
             self.gripRonline[(self.trial_iterator, 'force')].append(Rforce)
